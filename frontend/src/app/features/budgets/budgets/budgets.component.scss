@@ -1,0 +1,389 @@
+// =============================================================================
+// BudgetsComponent
+// Calm list page: generous spacing, one budget per row, soft surfaces.
+// The page owns its own width through .container (the shell does not constrain it).
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+// =============================================================================
+
+:host {
+  display: block;
+}
+
+@mixin container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container {
+  @include container;
+}
+
+.page {
+  padding: var(--space-7) 0 var(--space-8);
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  &__title {
+    font-size: clamp(1.75rem, 2vw + 1rem, 2.25rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  &__text {
+    max-width: 52ch;
+    margin-top: var(--space-2);
+    color: var(--color-text-muted);
+  }
+}
+
+// Visible only to screen readers.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ---- Form fields (filters and dialog) -----------------------------------------
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__control {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    transition: border-color var(--duration-fast) var(--ease);
+
+    &:hover {
+      border-color: var(--color-text-soft);
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-exceeded);
+    }
+  }
+
+  &__error {
+    color: var(--color-exceeded);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+
+  .field {
+    width: 170px;
+  }
+}
+
+// ---- Notices ------------------------------------------------------------------
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+
+  &--success {
+    background: var(--color-ok-bg);
+    color: var(--color-ok);
+  }
+
+  &--error {
+    background: var(--color-exceeded-bg);
+    color: var(--color-exceeded);
+  }
+}
+
+// ---- Loading skeletons ------------------------------------------------------------
+.skeletons {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.skeleton {
+  height: 172px;
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: skeleton-pulse 1.4s var(--ease) infinite alternate;
+  }
+
+  @keyframes skeleton-pulse {
+    to {
+      opacity: 0.25;
+    }
+  }
+}
+
+// ---- Empty state --------------------------------------------------------------------
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+
+  &__art {
+    width: 120px;
+    height: 96px;
+    margin-bottom: var(--space-4);
+  }
+
+  &__glow {
+    fill: var(--color-accent-soft);
+  }
+
+  &__wallet {
+    fill: var(--color-primary);
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--color-surface);
+    stroke-width: 3;
+  }
+
+  &__coin {
+    fill: var(--color-accent);
+  }
+
+  &__title {
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__text {
+    max-width: 40ch;
+    margin-bottom: var(--space-5);
+    color: var(--color-text-muted);
+  }
+}
+
+// ---- Budget list ----------------------------------------------------------------------
+.list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.budget {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.01em;
+  }
+
+  &__empty {
+    margin-top: var(--space-4);
+    color: var(--color-text-soft);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-7);
+  margin: 0 0 var(--space-4);
+}
+
+.figure {
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__value {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.01em;
+
+    &--over {
+      color: var(--color-exceeded);
+    }
+  }
+}
+
+// Progress bar: how much of the income is already given to categories.
+.bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+
+  &__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary);
+  }
+
+  &--over &__fill {
+    background: var(--color-exceeded);
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  font-size: var(--font-size-sm);
+
+  &__name {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__amount {
+    color: var(--color-text-muted);
+  }
+}
+
+// ---- Pagination -------------------------------------------------------------------------
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+
+  &__info {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+}
+
+// ---- Dialog -------------------------------------------------------------------------------
+.dialog {
+  width: min(440px, calc(100% - var(--space-6)));
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+
+  &::backdrop {
+    background: rgba(28, 43, 42, 0.4);
+  }
+
+  &__form {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+}
+
+// ---- Small screens --------------------------------------------------------------------------
+@media (max-width: 480px) {
+  .page {
+    padding-top: var(--space-6);
+  }
+
+  .budget {
+    padding: var(--space-4);
+  }
+
+  .figures {
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .filters .field {
+    width: 100%;
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}

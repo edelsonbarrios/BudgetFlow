@@ -1,0 +1,247 @@
+<section class="page">
+  <div class="container">
+    <header class="page__head">
+      <div>
+        <h1 class="page__title">Budgets</h1>
+        <p class="page__text">
+          One budget for each month. Set your income, then split it into categories.
+        </p>
+      </div>
+      <button type="button" class="btn btn--primary" (click)="openCreate()">New budget</button>
+    </header>
+
+    <!-- Filters -->
+    <div class="filters" role="group" aria-label="Filter budgets">
+      <div class="field">
+        <label class="field__label" for="filter-year">Year</label>
+        <input
+          #yearInput
+          id="filter-year"
+          class="field__control"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          placeholder="All years"
+          [value]="yearFilter() ?? ''"
+          (change)="onYearFilter(yearInput.value)"
+        />
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filter-month">Month</label>
+        <select
+          #monthSelect
+          id="filter-month"
+          class="field__control"
+          [value]="monthFilter() ?? ''"
+          (change)="onMonthFilter(monthSelect.value)"
+        >
+          <option value="">All months</option>
+          @for (m of monthOptions; track m.value) {
+            <option [value]="m.value">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+
+      @if (hasFilters()) {
+        <button type="button" class="btn btn--ghost" (click)="clearFilters()">Clear filters</button>
+      }
+    </div>
+
+    <!-- Success message (announced politely to screen readers) -->
+    <div aria-live="polite">
+      @if (successMessage()) {
+        <p class="notice notice--success">{{ successMessage() }}</p>
+      }
+    </div>
+
+    <!-- List area: loading, error, empty, or the budgets -->
+    @if (loading()) {
+      <p class="sr-only" role="status">Loading budgets</p>
+      <div class="skeletons" aria-hidden="true">
+        @for (n of skeletonRows; track n) {
+          <div class="skeleton"></div>
+        }
+      </div>
+    } @else if (loadError()) {
+      <div class="notice notice--error" role="alert">
+        <span>{{ loadError() }}</span>
+        <button type="button" class="btn btn--ghost" (click)="load()">Try again</button>
+      </div>
+    } @else if (budgets().length === 0) {
+      <div class="empty">
+        <svg class="empty__art" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+          <circle class="empty__glow" cx="60" cy="52" r="40" />
+          <rect class="empty__wallet" x="32" y="38" width="56" height="36" rx="10" />
+          <path class="empty__line" d="M32 51h56" />
+          <circle class="empty__coin" cx="77" cy="62" r="5" />
+        </svg>
+        @if (hasFilters()) {
+          <h2 class="empty__title">No budgets match these filters</h2>
+          <p class="empty__text">Try a different month or year, or clear the filters.</p>
+          <button type="button" class="btn btn--ghost" (click)="clearFilters()">Clear filters</button>
+        } @else {
+          <h2 class="empty__title">No budgets yet</h2>
+          <p class="empty__text">Create your first budget to start tracking where your money goes.</p>
+          <button type="button" class="btn btn--primary" (click)="openCreate()">New budget</button>
+        }
+      </div>
+    } @else {
+      <ul class="list">
+        @for (b of budgets(); track b.id) {
+          <li>
+            <article class="budget" [attr.aria-label]="monthLabel(b) + ' budget'">
+              <header class="budget__head">
+                <h2 class="budget__title">{{ monthLabel(b) }}</h2>
+                <button
+                  type="button"
+                  class="btn btn--ghost"
+                  [attr.aria-label]="'Edit ' + monthLabel(b) + ' budget'"
+                  (click)="openEdit(b)"
+                >
+                  Edit
+                </button>
+              </header>
+
+              <dl class="figures">
+                <div class="figure">
+                  <dt class="figure__label">Income</dt>
+                  <dd class="figure__value num">{{ b.totalIncome | currency: currencyCode }}</dd>
+                </div>
+                <div class="figure">
+                  <dt class="figure__label">Given to categories</dt>
+                  <dd class="figure__value num">{{ allocated(b) | currency: currencyCode }}</dd>
+                </div>
+                <div class="figure">
+                  <dt class="figure__label">{{ isOver(b) ? 'Over by' : 'Left to assign' }}</dt>
+                  <dd class="figure__value num" [class.figure__value--over]="isOver(b)">
+                    {{ (isOver(b) ? -left(b) : left(b)) | currency: currencyCode }}
+                  </dd>
+                </div>
+              </dl>
+
+              <div
+                class="bar"
+                [class.bar--over]="isOver(b)"
+                role="progressbar"
+                aria-label="Income given to categories"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="barFill(b)"
+                [attr.aria-valuetext]="allocatedPercent(b) + ' percent of income given to categories'"
+              >
+                <div class="bar__fill" [style.width.%]="barFill(b)"></div>
+              </div>
+
+              @if (b.categories.length > 0) {
+                <ul class="chips">
+                  @for (c of b.categories; track c.id) {
+                    <li class="chip">
+                      <span class="chip__name">{{ c.name }}</span>
+                      <span class="chip__amount num">{{ c.allocatedAmount | currency: currencyCode }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="budget__empty">No categories yet.</p>
+              }
+            </article>
+          </li>
+        }
+      </ul>
+
+      @if (totalPages() > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="page() <= 1"
+            (click)="goToPage(page() - 1)"
+          >
+            Previous
+          </button>
+          <p class="pager__info num">Page {{ page() }} of {{ totalPages() }}</p>
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="page() >= totalPages()"
+            (click)="goToPage(page() + 1)"
+          >
+            Next
+          </button>
+        </nav>
+      }
+    }
+  </div>
+</section>
+
+<!-- Create / edit dialog (native <dialog>: focus stays inside and Escape closes it) -->
+<dialog #formDialog class="dialog" aria-labelledby="budget-dialog-title" (close)="onDialogClosed()">
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <h2 id="budget-dialog-title" class="dialog__title">
+      {{ editingId() === null ? 'New budget' : 'Edit budget' }}
+    </h2>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field__label" for="budget-month">Month</label>
+        <select id="budget-month" class="field__control" formControlName="month">
+          @for (m of monthOptions; track m.value) {
+            <option [ngValue]="m.value">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="budget-year">Year</label>
+        <input
+          id="budget-year"
+          class="field__control"
+          type="number"
+          inputmode="numeric"
+          formControlName="year"
+          [attr.aria-invalid]="form.controls.year.touched && form.controls.year.invalid"
+          [attr.aria-describedby]="
+            form.controls.year.touched && form.controls.year.invalid ? 'budget-year-error' : null
+          "
+        />
+        @if (form.controls.year.touched && form.controls.year.invalid) {
+          <p id="budget-year-error" class="field__error">Enter a year above 0.</p>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="budget-income">Total income</label>
+      <input
+        id="budget-income"
+        class="field__control"
+        type="number"
+        inputmode="decimal"
+        step="0.01"
+        min="0"
+        formControlName="totalIncome"
+        [attr.aria-invalid]="form.controls.totalIncome.touched && form.controls.totalIncome.invalid"
+        [attr.aria-describedby]="
+          form.controls.totalIncome.touched && form.controls.totalIncome.invalid
+            ? 'budget-income-error'
+            : null
+        "
+      />
+      @if (form.controls.totalIncome.touched && form.controls.totalIncome.invalid) {
+        <p id="budget-income-error" class="field__error">Enter an amount of 0 or more.</p>
+      }
+    </div>
+
+    @if (formError()) {
+      <p class="field__error" role="alert">{{ formError() }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--ghost" (click)="closeDialog()">Cancel</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save budget' }}
+      </button>
+    </div>
+  </form>
+</dialog>

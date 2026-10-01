@@ -1,0 +1,38 @@
+<a class="skip-link" href="#main-content" (click)="skipToContent($event)">Skip to content</a>
+
+<div class="public-layout">
+  <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
+
+  <header class="header" [class.header--scrolled]="scrolled()">
+    <div class="header__inner">
+      <a class="brand" routerLink="/" aria-label="BudgetFlow home">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect class="brand__tile" width="32" height="32" rx="10" />
+          <path class="brand__wave" d="M7 19c3-6 6-6 9-2s6 4 9-2" />
+        </svg>
+        <span class="brand__name">BudgetFlow</span>
+      </a>
+
+      <nav class="header__actions" aria-label="Account">
+        <a class="btn btn--ghost" routerLink="/login">Log in</a>
+        <a class="btn btn--primary" routerLink="/register">
+          Get started
+          <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content" class="main" tabindex="-1">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <p class="footer__note">Budgeting should feel calm, not stressful.</p>
+      <p class="footer__copy">&copy; {{ currentYear }} BudgetFlow</p>
+    </div>
+  </footer>
+</div>

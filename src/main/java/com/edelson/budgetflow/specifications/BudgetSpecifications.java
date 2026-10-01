@@ -1,7 +1,6 @@
 package com.edelson.budgetflow.specifications;
 
 import com.edelson.budgetflow.entities.Budget;
-import org.springframework.beans.factory.BeanRegistry;
 import org.springframework.data.jpa.domain.Specification;
 
 public class BudgetSpecifications {

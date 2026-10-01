@@ -1,0 +1,202 @@
+<!-- ===== Hero ===== -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="container">
+    <h1 id="hero-title" class="hero__title">Know what's left to spend</h1>
+    <p class="hero__text">
+      Set a limit for each category, then watch your month fill up. BudgetFlow keeps your
+      spending clear, not stressful.
+    </p>
+    <div class="hero__actions">
+      <a class="btn btn--primary btn--lg" routerLink="/app/budgets">
+        Get started
+        <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Dashboard preview: made-up numbers, described once for screen readers. -->
+    <div
+      class="preview"
+      role="img"
+      aria-label="Preview of the BudgetFlow dashboard. In October, 1,284 dollars is left to spend out of a 4,000 dollar budget. Housing and transport are on track, groceries are close to the limit, and fun is over by 32 dollars."
+    >
+      <div class="preview__top">
+        <p class="preview__month">{{ previewMonth }} budget</p>
+        <p class="preview__chip">
+          <svg class="preview__chip-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3l2.2 5.3L20 9l-4.4 3.9L17 19l-5-3-5 3 1.4-6.1L4 9l5.8-.7z" />
+          </svg>
+          You're under budget, nice
+        </p>
+      </div>
+
+      <div class="preview__grid">
+        <!-- Left: the big number and where the money went -->
+        <div class="panel">
+          <p class="left__label">Left to spend</p>
+          <p class="left__amount num">{{ previewLeft | currency: 'USD' : 'symbol' : '1.0-0' }}</p>
+          <p class="left__sub num">
+            of {{ previewBudget | currency: 'USD' : 'symbol' : '1.0-0' }} budget
+          </p>
+
+          <div class="bar bar--lg status--ok">
+            <div class="bar__fill" [style.width.%]="previewPercentUsed"></div>
+          </div>
+
+          <div class="split">
+            <div class="donut-wrap">
+              <svg class="donut" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                <circle class="donut__track" cx="50" cy="50" r="38" />
+                @for (s of slices; track s.label; let i = $index) {
+                  <circle
+                    class="donut__slice tone-{{ s.tone }}"
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    pathLength="100"
+                    [attr.stroke-dasharray]="s.percent - 1 + ' ' + (101 - s.percent)"
+                    [attr.stroke-dashoffset]="-s.start"
+                    [style.animation-delay.ms]="i * 90"
+                  />
+                }
+              </svg>
+              <p class="donut__center num">
+                <span class="donut__value">{{ previewPercentUsed }}%</span>
+                <span class="donut__caption">used</span>
+              </p>
+            </div>
+
+            <ul class="legend">
+              @for (s of slices; track s.label) {
+                <li class="legend__item">
+                  <span class="legend__dot tone-{{ s.tone }}"></span>
+                  <span class="legend__name">{{ s.label }}</span>
+                  <span class="legend__amount num">
+                    {{ s.amount | currency: 'USD' : 'symbol' : '1.0-0' }}
+                  </span>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <!-- Right: category progress bars and the trend line -->
+        <div class="panel">
+          <ul class="cats">
+            @for (c of categories; track c.name; let i = $index) {
+              <li class="cat status--{{ c.status }}">
+                <div class="cat__head">
+                  <span class="cat__name">{{ c.name }}</span>
+                  <span class="cat__money num">
+                    {{ c.spent | currency: 'USD' : 'symbol' : '1.0-0' }}
+                    <span class="cat__limit">
+                      / {{ c.limit | currency: 'USD' : 'symbol' : '1.0-0' }}
+                    </span>
+                  </span>
+                </div>
+                <div class="bar">
+                  <div
+                    class="bar__fill"
+                    [style.width.%]="c.fill"
+                    [style.animation-delay.ms]="i * 90"
+                  ></div>
+                </div>
+                <p class="cat__note">{{ c.note }}</p>
+              </li>
+            }
+          </ul>
+
+          <div class="trend">
+            <p class="trend__title">Spending, last 6 months</p>
+            <svg class="trend__chart" viewBox="0 0 224 76" aria-hidden="true" focusable="false">
+              <path
+                class="trend__line"
+                pathLength="1"
+                d="M12 25.5 L52 29.3 L92 14.8 L132 34.6 L172 40.7 L212 54.8"
+              />
+              <circle class="trend__dot" cx="12" cy="25.5" r="3" />
+              <circle class="trend__dot" cx="52" cy="29.3" r="3" />
+              <circle class="trend__dot" cx="92" cy="14.8" r="3" />
+              <circle class="trend__dot" cx="132" cy="34.6" r="3" />
+              <circle class="trend__dot" cx="172" cy="40.7" r="3" />
+              <circle class="trend__dot trend__dot--now" cx="212" cy="54.8" r="4.5" />
+              <text class="trend__label" x="12" y="73" text-anchor="middle">May</text>
+              <text class="trend__label" x="52" y="73" text-anchor="middle">Jun</text>
+              <text class="trend__label" x="92" y="73" text-anchor="middle">Jul</text>
+              <text class="trend__label" x="132" y="73" text-anchor="middle">Aug</text>
+              <text class="trend__label" x="172" y="73" text-anchor="middle">Sep</text>
+              <text class="trend__label" x="212" y="73" text-anchor="middle">Oct</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Features ===== -->
+<section class="features" aria-labelledby="features-title">
+  <div class="container">
+    <h2 id="features-title" class="section-title">Budgeting that stays out of your way</h2>
+
+    <div class="features__grid">
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M4 7h16M4 12h10M4 17h6" />
+          </svg>
+        </span>
+        <h3 class="feature__title">Give every category a limit</h3>
+        <p class="feature__text">
+          Groceries, rent, fun: each one gets its own amount, so you can see how much is
+          used at a glance.
+        </p>
+      </div>
+
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 4a6 6 0 0 0-6 6c0 5-2 6-2 6h16s-2-1-2-6a6 6 0 0 0-6-6zM10 20a2 2 0 0 0 4 0" />
+          </svg>
+        </span>
+        <h3 class="feature__title">Get a nudge before you overspend</h3>
+        <p class="feature__text">
+          A category turns amber when you are close to its limit and red when you pass it.
+          No surprises at the end of the month.
+        </p>
+      </div>
+
+      <div class="feature">
+        <span class="feature__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M4 18l5-6 4 3 7-9" />
+          </svg>
+        </span>
+        <h3 class="feature__title">See where your money went</h3>
+        <p class="feature__text">
+          A simple chart shows your month, and a trend line shows whether you are spending
+          more or less than before.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Closing call to action ===== -->
+<section class="closing" aria-labelledby="closing-title">
+  <div class="container">
+    <div class="closing__band">
+      <span class="closing__blob closing__blob--one" aria-hidden="true"></span>
+      <span class="closing__blob closing__blob--two" aria-hidden="true"></span>
+      <h2 id="closing-title" class="closing__title">Ready to see what's left?</h2>
+      <p class="closing__text">Create your account and set up your first budget.</p>
+      <a class="btn btn--primary btn--lg" routerLink="/Budgets">
+        Get started
+        <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

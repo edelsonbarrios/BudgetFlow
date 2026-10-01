@@ -1,0 +1,533 @@
+// =============================================================================
+// LandingPageComponent
+// Calm page (hero, features, closing call to action) around one dense showcase:
+// the dashboard preview. The page owns its own width through .container because
+// the public layout deliberately does not constrain <main>.
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+// =============================================================================
+
+:host {
+  display: block;
+}
+
+@mixin container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container {
+  @include container;
+}
+
+.section-title {
+  max-width: 24ch;
+  margin: 0 auto var(--space-7);
+  text-align: center;
+  font-size: clamp(1.5rem, 2.5vw + 0.75rem, 2.25rem);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+// ---- Hero -------------------------------------------------------------------
+.hero {
+  padding: var(--space-8) 0 var(--space-8);
+  text-align: center;
+
+  &__title {
+    max-width: 16ch;
+    margin: 0 auto var(--space-4);
+    font-size: clamp(2.5rem, 5vw + 1rem, 4rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+
+  &__text {
+    max-width: 52ch;
+    margin: 0 auto var(--space-6);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-8);
+  }
+}
+
+// ---- Dashboard preview (the data-dense showcase) -----------------------------
+.preview {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+
+  &__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  &__month {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-muted);
+  }
+
+  // Playful moment: the only place the peach accent appears in the preview.
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--color-accent-soft);
+    color: var(--color-text);
+    font-size: 0.8125rem;
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__chip-icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+
+  &__grid {
+    display: grid;
+    gap: var(--space-3);
+  }
+}
+
+.panel {
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+// "Left to spend" block
+.left {
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__amount {
+    font-size: clamp(2.25rem, 4vw + 0.5rem, 3rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  &__sub {
+    margin-bottom: var(--space-4);
+    color: var(--color-text-soft);
+    font-size: var(--font-size-sm);
+  }
+}
+
+// Progress bars (shared by the big bar and the category bars)
+.bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+
+  &--lg {
+    height: 10px;
+    margin-bottom: var(--space-5);
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--status-color, var(--color-primary));
+    transform-origin: left center;
+  }
+}
+
+// Status colors: kept separate from the playful accent on purpose.
+.status--ok {
+  --status-color: var(--color-ok);
+}
+
+.status--warning {
+  --status-color: var(--color-warning);
+}
+
+.status--exceeded {
+  --status-color: var(--color-exceeded);
+}
+
+// Slice colors, shared by the donut and its legend.
+.tone-1 {
+  --tone: var(--color-primary);
+}
+
+.tone-2 {
+  --tone: color-mix(in srgb, var(--color-primary) 70%, white);
+}
+
+.tone-3 {
+  --tone: color-mix(in srgb, var(--color-primary) 45%, white);
+}
+
+.tone-4 {
+  --tone: color-mix(in srgb, var(--color-primary) 25%, white);
+}
+
+.tone-5 {
+  --tone: var(--color-text-soft);
+}
+
+// Donut + legend (every slice also has a name and an amount, so color is never the only clue)
+.split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.donut-wrap {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  flex-shrink: 0;
+}
+
+.donut {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+
+  &__track,
+  &__slice {
+    fill: none;
+    stroke-width: 14;
+  }
+
+  &__track {
+    stroke: var(--color-border);
+  }
+
+  &__slice {
+    stroke: var(--tone);
+  }
+
+  &__center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__value {
+    font-size: 1.375rem;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.1;
+  }
+
+  &__caption {
+    color: var(--color-text-soft);
+    font-size: 0.75rem;
+  }
+}
+
+.legend {
+  display: grid;
+  flex: 1;
+  min-width: 150px;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.8125rem;
+  }
+
+  &__dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--tone);
+  }
+
+  &__name {
+    flex: 1;
+    color: var(--color-text-muted);
+  }
+
+  &__amount {
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+// Category rows
+.cats {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.cat {
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+  }
+
+  &__name {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__money {
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__limit {
+    color: var(--color-text-soft);
+    font-weight: var(--font-weight-regular);
+  }
+
+  &__note {
+    margin-top: var(--space-1);
+    color: var(--status-color);
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+// Trend line
+.trend {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+
+  &__title {
+    margin-bottom: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--color-primary);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &__dot {
+    fill: var(--color-surface);
+    stroke: var(--color-primary);
+    stroke-width: 2;
+
+    &--now {
+      fill: var(--color-primary);
+    }
+  }
+
+  &__label {
+    fill: var(--color-text-soft);
+    font-family: inherit;
+    font-size: 9px;
+  }
+}
+
+// One load sequence for the preview: bars fill, donut draws, trend line draws.
+// Only runs for visitors who have not asked for reduced motion.
+@media (prefers-reduced-motion: no-preference) {
+  .bar__fill {
+    animation: bar-fill 800ms var(--ease) both;
+  }
+
+  .donut__slice {
+    animation: donut-draw 900ms var(--ease) both;
+  }
+
+  .trend__line {
+    stroke-dasharray: 1;
+    animation: line-draw 1100ms var(--ease) 300ms both;
+  }
+
+  @keyframes bar-fill {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes donut-draw {
+    from {
+      stroke-dasharray: 0 100;
+    }
+  }
+
+  @keyframes line-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+}
+
+// ---- Features ---------------------------------------------------------------
+.features {
+  padding: var(--space-6) 0 var(--space-8);
+
+  &__grid {
+    display: grid;
+    gap: var(--space-6);
+  }
+}
+
+.feature {
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--color-primary-soft);
+
+    svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: var(--color-primary);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  }
+
+  &__title {
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.3;
+  }
+
+  &__text {
+    max-width: 38ch;
+    color: var(--color-text-muted);
+  }
+}
+
+// ---- Closing call to action ---------------------------------------------------
+.closing {
+  padding: 0 0 var(--space-8);
+
+  &__band {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    padding: var(--space-8) var(--space-5);
+    border-radius: var(--radius-lg);
+    background: var(--color-primary-soft);
+    text-align: center;
+  }
+
+  &__title {
+    margin-bottom: var(--space-3);
+    font-size: clamp(1.5rem, 2.5vw + 0.75rem, 2.25rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  &__text {
+    max-width: 44ch;
+    margin: 0 auto var(--space-5);
+    color: var(--color-text-muted);
+  }
+
+  // Playful illustration: two soft peach shapes tucked into the corners.
+  &__blob {
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    background: var(--color-accent-soft);
+
+    &--one {
+      top: -40px;
+      left: -30px;
+      width: 150px;
+      height: 150px;
+    }
+
+    &--two {
+      right: -20px;
+      bottom: -50px;
+      width: 190px;
+      height: 190px;
+    }
+  }
+}
+
+// ---- Wider screens -------------------------------------------------------------
+@media (min-width: 720px) {
+  .features__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-7);
+  }
+}
+
+@media (min-width: 860px) {
+  .preview {
+    padding: var(--space-6);
+
+    &__grid {
+      grid-template-columns: 1fr 1.1fr;
+      gap: var(--space-4);
+    }
+  }
+}
+
+// ---- Small screens --------------------------------------------------------------
+@media (max-width: 480px) {
+  .hero {
+    padding-top: var(--space-7);
+  }
+
+  .preview {
+    padding: var(--space-3);
+  }
+
+  .panel {
+    padding: var(--space-4);
+  }
+}
