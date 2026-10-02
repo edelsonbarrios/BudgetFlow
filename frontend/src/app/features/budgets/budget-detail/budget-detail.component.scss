@@ -1,0 +1,469 @@
+// =============================================================================
+// BudgetDetailComponent
+// One budget in full. Calm page: generous spacing, soft surfaces, one accent.
+// The page owns its own width through .container (the shell does not constrain it).
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+//
+// Motion rules for this file (same as BudgetsComponent):
+//  - Spring easing is for things the user presses directly (buttons).
+//  - Plain ease is for passive changes (colors, borders, shadows).
+//  - Entrance animations use fill-mode "backwards", never "both" or "forwards".
+//    A forwards fill would freeze the final transform and block hover effects.
+//  - Anything that moves lives inside prefers-reduced-motion: no-preference.
+//
+// Page entrance order: back link, header, summary, section title, then each
+// category row slides in from the left a moment after the previous one.
+// Row delays are fixed per position (SCSS loop), so no CSS variables are needed.
+// =============================================================================
+
+:host {
+  display: block;
+
+  // Move --ease-out to _tokens.scss when you reuse it on other pages, then
+  // delete it here. --ease-spring already lives in _tokens.scss.
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@mixin container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container {
+  @include container;
+}
+
+// Visible only to screen readers.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page {
+  padding: var(--space-6) 0 var(--space-8);
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  &__title {
+    font-size: clamp(1.75rem, 2vw + 1rem, 2.25rem);
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  &__text {
+    max-width: 52ch;
+    margin-top: var(--space-2);
+    color: var(--color-text-muted);
+  }
+}
+
+// ---- Buttons -----------------------------------------------------------------------------
+// Same look as the Budgets page: a sweep layer behind the label that reacts on
+// hover. Colors and sizes still come from the global .btn styles.
+.btn {
+  --wipe: var(--color-primary-soft);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  // The sweep layer sits behind the label.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  // Primary: a soft band of light passes over the button on hover.
+  &.btn--primary::before {
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+  }
+
+  // Ghost: a tinted fill grows in from the left on hover.
+  &.btn--ghost::before {
+    background: var(--wipe);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+}
+
+// Edit gets its own warm tint, like on the Budgets page.
+.row .btn--ghost {
+  --wipe: var(--color-accent-soft);
+}
+
+// ---- Back link ---------------------------------------------------------------------
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease);
+
+  &:hover {
+    color: var(--color-primary);
+  }
+
+  &__icon {
+    width: 1.1em;
+    height: 1.1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--duration-base) var(--ease-spring);
+  }
+
+  &:hover &__icon {
+    transform: translateX(-3px);
+  }
+}
+
+// ---- Notices -------------------------------------------------------------------------
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+
+  &--success {
+    background: var(--color-ok-bg);
+    color: var(--color-ok);
+  }
+
+  &--error {
+    background: var(--color-exceeded-bg);
+    color: var(--color-exceeded);
+  }
+}
+
+// ---- Loading skeletons -------------------------------------------------------------------
+.skeletons {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.skeleton {
+  height: 132px;
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+  opacity: 0.55;
+}
+
+// ---- Empty states ---------------------------------------------------------------------------
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+
+  &__title {
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__text {
+    max-width: 40ch;
+    margin-bottom: var(--space-5);
+    color: var(--color-text-muted);
+  }
+
+  // The "no categories yet" box inside the page is smaller and has a soft frame.
+  &--small {
+    padding: var(--space-6) var(--space-4);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+}
+
+// ---- Totals ----------------------------------------------------------------------------------
+.summary {
+  margin-bottom: var(--space-7);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-7);
+  margin: 0 0 var(--space-4);
+}
+
+.figure {
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__value {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.01em;
+
+    &--over {
+      color: var(--color-exceeded);
+    }
+  }
+}
+
+// Progress bar: how much of the income is already given to categories.
+.bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+
+  &__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary);
+    transform-origin: left center;
+  }
+
+  &--over &__fill {
+    background: var(--color-exceeded);
+  }
+}
+
+// ---- Category rows -----------------------------------------------------------------------------
+.section-title {
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.rows {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &:hover {
+    border-color: var(--color-primary-soft);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    overflow: hidden;
+    font-weight: var(--font-weight-semibold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__share {
+    color: var(--color-text-soft);
+    font-size: var(--font-size-sm);
+  }
+
+  &__amount {
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+  }
+}
+
+// ---- Small screens -----------------------------------------------------------------------------
+@media (max-width: 480px) {
+  .page {
+    padding-top: var(--space-5);
+  }
+
+  .summary {
+    padding: var(--space-4);
+  }
+
+  .figures {
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .row {
+    gap: var(--space-3);
+    padding-left: var(--space-4);
+  }
+}
+
+// ---- Keyframes ---------------------------------------------------------------------------------
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+// Category rows: a small hint of movement from the left.
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Motion (only for people who have not asked for reduced motion) -----------------------------
+@media (prefers-reduced-motion: no-preference) {
+  // Buttons: the same hover sweep and press language as the Budgets page.
+  .btn {
+    &.btn--primary:hover:not(:disabled)::before {
+      transform: translateX(120%);
+      transition: transform 0.7s ease;
+    }
+
+    &.btn--ghost:hover:not(:disabled)::before {
+      transform: scaleX(1);
+      transition: transform 0.3s ease;
+    }
+  }
+
+  // Page entrance: back link, header, summary, section title, then the rows.
+  .back {
+    animation: fade-in 0.4s ease backwards;
+  }
+
+  .page__head {
+    animation: fade-up 0.5s var(--ease-out) backwards;
+  }
+
+  .summary {
+    animation: fade-up 0.5s var(--ease-out) 0.08s backwards;
+  }
+
+  .section-title {
+    animation: fade-up 0.5s var(--ease-out) 0.16s backwards;
+  }
+
+  .notice {
+    animation: notice-in 0.35s var(--ease-spring) backwards;
+  }
+
+  // Progress bar: fills in from the left after the summary card appears,
+  // and later changes to its width (after saving a category) glide.
+  .bar__fill {
+    animation: grow-x 0.8s var(--ease-out) 0.35s backwards;
+    transition: width 0.5s var(--ease-out);
+  }
+
+  // Category rows: each one slides in from the left a moment after the previous.
+  // The delay is fixed per position, so rows after the 12th share the last delay
+  // and the list never makes you wait.
+  .rows > .row {
+    animation: row-in 0.5s var(--ease-out) backwards;
+    animation-delay: 0.9s;
+  }
+
+  @for $n from 1 through 12 {
+    .rows > .row:nth-child(#{$n}) {
+      animation-delay: 0.28s + ($n - 1) * 0.07s;
+    }
+  }
+
+  // Loading skeleton: a soft light sweeping across, not a spinner.
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 0%,
+      var(--color-surface) 50%,
+      var(--color-border) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  // Empty states
+  .empty {
+    animation: fade-up 0.5s var(--ease-out) backwards;
+  }
+}

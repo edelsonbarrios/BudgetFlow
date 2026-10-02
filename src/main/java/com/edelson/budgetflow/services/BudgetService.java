@@ -56,7 +56,10 @@ public class BudgetService {
     }
 
     @Transactional
-    public BudgetResponse updateBudget(Long id, UpdateBudgetRequest request) {
+    public BudgetResponse updateBudget(
+            Long id,
+            UpdateBudgetRequest request
+    ) {
         Budget budgetToUpdate = budgetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Budget record could not be found"));
 
@@ -71,5 +74,14 @@ public class BudgetService {
 
         budgetMapper.updateEntity(request, budgetToUpdate);
         return budgetMapper.toResponse(budgetToUpdate);
+    }
+
+    public BudgetResponse getBudgetById(
+            Long budgetId
+    ) {
+        return budgetMapper.toResponse(
+                budgetRepository.findById(budgetId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Budget record could nto be found"))
+        );
     }
 }

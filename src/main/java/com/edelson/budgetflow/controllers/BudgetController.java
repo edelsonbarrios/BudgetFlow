@@ -31,26 +31,19 @@ public class BudgetController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "12") int size) {
         Pageable pageable = PageRequest.of(
                 page - 1,
                 size,
                 Sort.by(Sort.Direction.DESC, "year", "month")
         );
-        return  budgetService.filterBudgetsByMonthAndYear(year, month, pageable);
+        return  budgetService.filterBudgetsByMonthAndYear(month, year, pageable);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<BudgetResponse> createBudget(@Valid @RequestBody CreateBudgetRequest request) {
-        BudgetResponse createdBudget = budgetService.createBudget(request);
-
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(createdBudget.id())
-                .toUri();
-
-        return ResponseEntity.created(location).body(createdBudget);
+        return ResponseEntity.ok(budgetService.createBudget(request));
     }
 
     @PutMapping("/{id}")
@@ -59,5 +52,12 @@ public class BudgetController {
             @Valid @RequestBody UpdateBudgetRequest request
             ) {
         return ResponseEntity.ok(budgetService.updateBudget(id, request));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BudgetResponse> getBudgetById(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(budgetService.getBudgetById(id));
     }
 }

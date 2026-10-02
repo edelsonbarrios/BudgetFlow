@@ -13,6 +13,8 @@ import com.edelson.budgetflow.dtos.responses.BudgetResponse;
 public interface BudgetMapper {
     BudgetResponse toResponse(Budget budget);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "categories", ignore = true)
     Budget toEntity(CreateBudgetRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

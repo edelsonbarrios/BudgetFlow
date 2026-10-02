@@ -1,0 +1,118 @@
+<section class="page">
+  <div class="container">
+    <a class="back" routerLink="/app/budgets">
+      <svg class="back__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M19 12H5M11 6l-6 6 6 6" />
+      </svg>
+      Back to budgets
+    </a>
+
+    <!-- Success message (announced politely to screen readers) -->
+    <div aria-live="polite">
+      @if (successMessage()) {
+        <p class="notice notice--success">{{ successMessage() }}</p>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="sr-only" role="status">Loading budget</p>
+      <div class="skeletons" aria-hidden="true">
+        @for (n of skeletonRows; track n) {
+          <div class="skeleton"></div>
+        }
+      </div>
+    } @else if (notFound()) {
+      <div class="empty">
+        <h1 class="empty__title">We could not find this budget</h1>
+        <p class="empty__text">It may have been removed, or the address is not right.</p>
+        <a class="btn btn--primary" routerLink="/app/budgets">Go to your budgets</a>
+      </div>
+    } @else if (loadError()) {
+      <div class="notice notice--error" role="alert">
+        <span>{{ loadError() }}</span>
+        <button type="button" class="btn btn--ghost" (click)="load()">Try again</button>
+      </div>
+    } @else {
+      @if (budget(); as b) {
+        <header class="page__head">
+          <div>
+            <h1 class="page__title">{{ title() }}</h1>
+            <p class="page__text">Split this month's income into categories.</p>
+          </div>
+          <button type="button" class="btn btn--primary" (click)="categoryDialog.open(b)">
+            Add category
+          </button>
+        </header>
+
+        <!-- Totals -->
+        <div class="summary">
+          <dl class="figures">
+            <div class="figure">
+              <dt class="figure__label">Income</dt>
+              <dd class="figure__value num">{{ b.totalIncome | currency: currencyCode }}</dd>
+            </div>
+            <div class="figure">
+              <dt class="figure__label">Given to categories</dt>
+              <dd class="figure__value num">{{ allocated() | currency: currencyCode }}</dd>
+            </div>
+            <div class="figure">
+              <dt class="figure__label">{{ isOver() ? 'Over by' : 'Left to assign' }}</dt>
+              <dd class="figure__value num" [class.figure__value--over]="isOver()">
+                {{ leftShown() | currency: currencyCode }}
+              </dd>
+            </div>
+          </dl>
+
+          <div
+            class="bar"
+            [class.bar--over]="isOver()"
+            role="progressbar"
+            aria-label="Income given to categories"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="barFill()"
+            [attr.aria-valuetext]="percent() + ' percent of income given to categories'"
+          >
+            <div class="bar__fill" [style.width.%]="barFill()"></div>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <h2 class="section-title">Categories</h2>
+
+        @if (b.categories.length > 0) {
+          <ul class="rows">
+            @for (c of b.categories; track c.id) {
+              <li class="row">
+                <div class="row__main">
+                  <p class="row__name">{{ c.name }}</p>
+                  <p class="row__share num">{{ incomeShare(c) }}% of income</p>
+                </div>
+                <p class="row__amount num">{{ c.allocatedAmount | currency: currencyCode }}</p>
+                <button
+                  type="button"
+                  class="btn btn--ghost"
+                  [attr.aria-label]="'Edit category ' + c.name"
+                  (click)="categoryDialog.open(b, c)"
+                >
+                  Edit
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="empty empty--small">
+            <p class="empty__title">No categories yet</p>
+            <p class="empty__text">Give your income a job: add your first category.</p>
+            <button type="button" class="btn btn--primary" (click)="categoryDialog.open(b)">
+              Add category
+            </button>
+          </div>
+        }
+      }
+    }
+  </div>
+</section>
+
+<!-- The popup lives outside the states above, so it always exists. -->
+<app-budget-category-dialog #categoryDialog (saved)="onCategorySaved($event)" />

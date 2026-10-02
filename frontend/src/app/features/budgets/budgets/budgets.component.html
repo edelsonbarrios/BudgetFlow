@@ -7,44 +7,95 @@
           One budget for each month. Set your income, then split it into categories.
         </p>
       </div>
-      <button type="button" class="btn btn--primary" (click)="openCreate()">New budget</button>
+      <button type="button" class="btn btn--primary" (click)="openCreate()">
+        <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        New budget
+      </button>
     </header>
 
     <!-- Filters -->
     <div class="filters" role="group" aria-label="Filter budgets">
-      <div class="field">
-        <label class="field__label" for="filter-year">Year</label>
-        <input
-          #yearInput
-          id="filter-year"
-          class="field__control"
-          type="number"
-          inputmode="numeric"
-          min="1"
-          placeholder="All years"
-          [value]="yearFilter() ?? ''"
-          (change)="onYearFilter(yearInput.value)"
-        />
+      <div class="filters__group">
+        <label class="filters__label" for="filter-year">Year</label>
+        <div class="stepper">
+          <button
+            type="button"
+            class="stepper__btn"
+            aria-label="Previous year"
+            (click)="stepYear(-1)"
+          >
+            <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+          </button>
+          <input
+            #yearInput
+            id="filter-year"
+            class="stepper__input"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            placeholder="All years"
+            [value]="yearFilter() ?? ''"
+            (change)="onYearFilter(yearInput.value)"
+          />
+          <button
+            type="button"
+            class="stepper__btn"
+            aria-label="Next year"
+            (click)="stepYear(1)"
+          >
+            <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div class="field">
-        <label class="field__label" for="filter-month">Month</label>
-        <select
-          #monthSelect
-          id="filter-month"
-          class="field__control"
-          [value]="monthFilter() ?? ''"
-          (change)="onMonthFilter(monthSelect.value)"
-        >
-          <option value="">All months</option>
-          @for (m of monthOptions; track m.value) {
-            <option [value]="m.value">{{ m.name }}</option>
+      <div class="filters__group filters__group--grow">
+        <span class="filters__label" id="filter-month-label">Month</span>
+        <div class="pills" role="group" aria-labelledby="filter-month-label">
+          <button
+            type="button"
+            class="pill"
+            [class.pill--on]="monthFilter() === null"
+            [attr.aria-pressed]="monthFilter() === null"
+            [style.--k]="0"
+            (click)="onMonthFilter('')"
+          >
+            <svg class="pill__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M5 12.5l4.5 4.5L19 7" />
+            </svg>
+            All
+          </button>
+          @for (m of monthOptions; track m.value; let k = $index) {
+            <button
+              type="button"
+              class="pill"
+              [class.pill--on]="monthFilter() === m.value"
+              [attr.aria-pressed]="monthFilter() === m.value"
+              [attr.aria-label]="m.name"
+              [style.--k]="k + 1"
+              (click)="onMonthFilter(monthFilter() === m.value ? '' : m.value.toString())"
+            >
+              <svg class="pill__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M5 12.5l4.5 4.5L19 7" />
+              </svg>
+              {{ m.name.slice(0, 3) }}
+            </button>
           }
-        </select>
+        </div>
       </div>
 
       @if (hasFilters()) {
-        <button type="button" class="btn btn--ghost" (click)="clearFilters()">Clear filters</button>
+        <button type="button" class="btn btn--ghost filters__clear" (click)="clearFilters()">
+          <svg class="btn__icon btn__icon--close" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+          Clear filters
+        </button>
       }
     </div>
 
@@ -79,28 +130,53 @@
         @if (hasFilters()) {
           <h2 class="empty__title">No budgets match these filters</h2>
           <p class="empty__text">Try a different month or year, or clear the filters.</p>
-          <button type="button" class="btn btn--ghost" (click)="clearFilters()">Clear filters</button>
+          <button type="button" class="btn btn--ghost" (click)="clearFilters()">
+            <svg class="btn__icon btn__icon--close" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+            Clear filters
+          </button>
         } @else {
           <h2 class="empty__title">No budgets yet</h2>
           <p class="empty__text">Create your first budget to start tracking where your money goes.</p>
-          <button type="button" class="btn btn--primary" (click)="openCreate()">New budget</button>
+          <button type="button" class="btn btn--primary" (click)="openCreate()">
+            <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            New budget
+          </button>
         }
       </div>
     } @else {
-      <ul class="list">
-        @for (b of budgets(); track b.id) {
-          <li>
+      <ul class="list" [class.list--quick]="quickReplay()">
+        @for (b of budgets(); track b.id; let i = $index) {
+          <li [style.--i]="i < 12 ? i : 12">
             <article class="budget" [attr.aria-label]="monthLabel(b) + ' budget'">
               <header class="budget__head">
                 <h2 class="budget__title">{{ monthLabel(b) }}</h2>
-                <button
-                  type="button"
-                  class="btn btn--ghost"
-                  [attr.aria-label]="'Edit ' + monthLabel(b) + ' budget'"
-                  (click)="openEdit(b)"
-                >
-                  Edit
-                </button>
+                <div class="budget__actions">
+                  <a
+                    class="btn btn--ghost action--view"
+                    [routerLink]="['/app/budgets', b.id]"
+                    [attr.aria-label]="'View ' + monthLabel(b) + ' budget'"
+                  >
+                    View
+                    <svg class="btn__icon btn__icon--next" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </a>
+                  <button
+                    type="button"
+                    class="btn btn--ghost action--edit"
+                    [attr.aria-label]="'Edit ' + monthLabel(b) + ' budget'"
+                    (click)="openEdit(b)"
+                  >
+                    <svg class="btn__icon btn__icon--edit" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" />
+                    </svg>
+                    Edit
+                  </button>
+                </div>
               </header>
 
               <dl class="figures">
@@ -135,8 +211,8 @@
 
               @if (b.categories.length > 0) {
                 <ul class="chips">
-                  @for (c of b.categories; track c.id) {
-                    <li class="chip">
+                  @for (c of b.categories; track c.id; let j = $index) {
+                    <li class="chip" [style.--j]="j < 10 ? j : 10">
                       <span class="chip__name">{{ c.name }}</span>
                       <span class="chip__amount num">{{ c.allocatedAmount | currency: currencyCode }}</span>
                     </li>
@@ -158,6 +234,9 @@
             [disabled]="page() <= 1"
             (click)="goToPage(page() - 1)"
           >
+            <svg class="btn__icon btn__icon--prev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M19 12H5M11 6l-6 6 6 6" />
+            </svg>
             Previous
           </button>
           <p class="pager__info num">Page {{ page() }} of {{ totalPages() }}</p>
@@ -168,6 +247,9 @@
             (click)="goToPage(page() + 1)"
           >
             Next
+            <svg class="btn__icon btn__icon--next" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
           </button>
         </nav>
       }

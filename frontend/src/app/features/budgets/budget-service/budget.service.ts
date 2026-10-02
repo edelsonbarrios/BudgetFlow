@@ -8,11 +8,12 @@ import {BudgetFilter} from '../dtos/budget-filter';
 import {PageResponse} from '../../../shared/models/PageResponse';
 import {CreateBudgetRequest} from '../dtos/create-budget-request';
 import {UpdateBudgetRequest} from '../dtos/update-budget-request';
+import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/budgets';
+  private readonly baseUrl = `${DevelopmentUrl}/api/budgets`
 
   getBudgets(filter: BudgetFilter): Observable<PageResponse<Budget>> {
     let params = new HttpParams().set('page', filter.page).set('size', filter.size);
@@ -33,5 +34,11 @@ export class BudgetService {
 
   updateBudget(id: number, request: UpdateBudgetRequest): Observable<Budget> {
     return this.http.put<Budget>(`${this.baseUrl}/${id}`, request);
+  }
+
+  getBudgetById(
+    id: number
+  ) : Observable<Budget> {
+    return this.http.get<Budget>(`${this.baseUrl}/${id}`);
   }
 }

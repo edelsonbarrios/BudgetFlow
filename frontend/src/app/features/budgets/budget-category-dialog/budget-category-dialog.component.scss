@@ -1,0 +1,93 @@
+// =============================================================================
+// BudgetCategoryDialogComponent
+// A small popup form. The field styles are copied from BudgetsComponent on purpose
+// (component styles stay inside their own component). When a third component needs
+// the same field and dialog styles, move them into a global file in src/app/styles.
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+// =============================================================================
+
+.dialog {
+  width: min(440px, calc(100% - var(--space-6)));
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+
+  &::backdrop {
+    background: rgba(28, 43, 42, 0.4);
+  }
+
+  &__form {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  // Small line under the title: which month, and how much is left to assign.
+  &__hint {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__control {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    transition: border-color var(--duration-fast) var(--ease);
+
+    &:hover {
+      border-color: var(--color-text-soft);
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-exceeded);
+    }
+  }
+
+  &__error {
+    color: var(--color-exceeded);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  // A gentle heads-up (amber, same family as the WARNING status). It never blocks saving.
+  &__warning {
+    color: var(--color-warning);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+}

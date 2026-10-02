@@ -1,0 +1,78 @@
+<!-- Native <dialog>: focus stays inside and Escape closes it. -->
+<dialog #dialog class="dialog" aria-labelledby="category-dialog-title" (close)="onClosed()">
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div>
+      <h2 id="category-dialog-title" class="dialog__title">
+        {{ editingCategoryId() === null ? 'New category' : 'Edit category' }}
+      </h2>
+      @if (budget()) {
+        <p class="dialog__hint num">
+          {{ title() }}: {{ leftShown() | currency: currencyCode }}
+          {{ left() < 0 ? 'over income' : 'left to assign' }}
+        </p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="category-name">Name</label>
+      <input
+        id="category-name"
+        class="field__control"
+        type="text"
+        maxlength="100"
+        placeholder="For example, Groceries"
+        formControlName="name"
+        [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid"
+        [attr.aria-describedby]="
+          form.controls.name.touched && form.controls.name.invalid ? 'category-name-error' : null
+        "
+      />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <p id="category-name-error" class="field__error">Enter a name up to 100 characters.</p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="category-amount">Amount for this month</label>
+      <input
+        id="category-amount"
+        class="field__control"
+        type="number"
+        inputmode="decimal"
+        step="0.01"
+        min="0.01"
+        formControlName="allocatedAmount"
+        [attr.aria-invalid]="
+          form.controls.allocatedAmount.touched && form.controls.allocatedAmount.invalid
+        "
+        [attr.aria-describedby]="
+          form.controls.allocatedAmount.touched && form.controls.allocatedAmount.invalid
+            ? 'category-amount-error'
+            : null
+        "
+      />
+      @if (form.controls.allocatedAmount.touched && form.controls.allocatedAmount.invalid) {
+        <p id="category-amount-error" class="field__error">Enter an amount above 0.</p>
+      }
+
+      <!-- Only a warning: the user can still save. -->
+      @if (overBy() > 0) {
+        <p class="field__warning num" role="status">
+          This puts the budget over its income by {{ overBy() | currency: currencyCode }}. You can
+          still save it.
+        </p>
+      }
+    </div>
+
+    @if (formError()) {
+      <p class="field__error" role="alert">{{ formError() }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save category' }}
+      </button>
+    </div>
+  </form>
+</dialog>

@@ -3,10 +3,26 @@
 // Calm list page: generous spacing, one budget per row, soft surfaces.
 // The page owns its own width through .container (the shell does not constrain it).
 // All colors, spacing and motion come from the global tokens (_tokens.scss).
+//
+// Motion rules for this file:
+//  - Spring easing is for things the user presses directly (buttons, pills).
+//  - Plain ease is for passive changes (colors, borders, shadows).
+//  - Entrance animations use fill-mode "backwards", never "both" or "forwards".
+//    A forwards fill would freeze the final transform and block the hover lift.
+//  - Anything that moves lives inside prefers-reduced-motion: no-preference.
+//
+// Budget rows: each row slides in a few pixels from the left, one after another.
+// Delays are fixed per row position (SCSS loop), so no CSS variables are needed.
+// The first load is slower, later loads use .list--quick.
 // =============================================================================
 
 :host {
   display: block;
+
+  // Move these two to _tokens.scss as --ease-spring and --ease-out when you
+  // reuse them on other pages, then delete them here.
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @mixin container {
@@ -58,7 +74,102 @@
   border: 0;
 }
 
-// ---- Form fields (filters and dialog) -----------------------------------------
+// ---- Buttons --------------------------------------------------------------------------
+// Pill shape, an icon that reacts on hover, and a fill that sweeps across on hover.
+// Colors and sizes still come from the global .btn styles. This adds the shape,
+// the sweep, the icon motion and the focus ring.
+.btn {
+  --wipe: var(--color-primary-soft);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.28s var(--ease-spring),
+    box-shadow 0.28s var(--ease-spring),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+
+  // The sweep layer sits behind the label and icon.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  &:hover:not(:disabled) {
+    box-shadow: var(--shadow-sm);
+  }
+
+  &.btn--primary:hover:not(:disabled) {
+    box-shadow: var(--shadow-md);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  // Primary: a soft band of light passes over the button on hover.
+  &.btn--primary::before {
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+  }
+
+  // Ghost: a tinted fill grows in from the left on hover.
+  &.btn--ghost::before {
+    background: var(--wipe);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+}
+
+// View and Edit get their own tint so they read as different actions.
+.action--view {
+  --wipe: var(--color-primary-soft);
+}
+
+.action--edit {
+  --wipe: var(--color-accent-soft);
+}
+
+.btn__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s var(--ease-spring);
+}
+
+// ---- Form fields (dialog) -----------------------------------------------------
 .field {
   display: flex;
   flex-direction: column;
@@ -81,10 +192,21 @@
     font-family: inherit;
     font-size: var(--font-size-base);
     line-height: 1.5;
-    transition: border-color var(--duration-fast) var(--ease);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
 
     &:hover {
       border-color: var(--color-text-soft);
+    }
+
+    // The soft ring is the visible focus signal. The border turns dark so the
+    // focus state still has strong contrast, and the transparent outline keeps
+    // it visible in high-contrast mode.
+    &:focus-visible {
+      outline: 2px solid transparent;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
     }
 
     &[aria-invalid='true'] {
@@ -105,15 +227,199 @@
   gap: var(--space-3);
 }
 
+// ---- Filter bar: year stepper and month pills ------------------------------------------
 .filters {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--space-3) var(--space-4);
+  gap: var(--space-4) var(--space-6);
   margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 
-  .field {
-    width: 170px;
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+
+    &--grow {
+      flex: 1 1 320px;
+    }
+  }
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__clear {
+    margin-left: auto;
+  }
+}
+
+// Year: previous button, number, next button, joined into one pill.
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-text-soft);
+  }
+
+  // The whole control shows focus, whichever part has it.
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+  }
+
+  &__btn {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.1s ease;
+
+    &:hover {
+      background: var(--color-primary-soft);
+      color: var(--color-text);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: -2px;
+    }
+  }
+
+  &__icon {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &__input {
+    width: 9ch;
+    padding: var(--space-2) 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    text-align: center;
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+
+    &::placeholder {
+      color: var(--color-text-soft);
+      font-weight: var(--font-weight-medium);
+    }
+
+    // The joined control around it shows the focus ring.
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+// Month: one pill per month. The selected pill grows a check mark.
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition:
+    transform 0.28s var(--ease-spring),
+    box-shadow 0.28s var(--ease-spring),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-text-soft);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  &--on {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-text);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__check {
+    flex: none;
+    width: 0;
+    height: 14px;
+    margin-right: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    transform: scale(0);
+    transition:
+      width 0.28s var(--ease-spring),
+      margin 0.28s var(--ease-spring),
+      opacity 0.2s ease,
+      transform 0.28s var(--ease-spring);
+  }
+
+  &--on &__check {
+    width: 14px;
+    margin-right: var(--space-1);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -151,19 +457,7 @@
   height: 172px;
   border-radius: var(--radius-lg);
   background: var(--color-border);
-  opacity: 0.55;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .skeleton {
-    animation: skeleton-pulse 1.4s var(--ease) infinite alternate;
-  }
-
-  @keyframes skeleton-pulse {
-    to {
-      opacity: 0.25;
-    }
-  }
+  opacity: 0.6;
 }
 
 // ---- Empty state --------------------------------------------------------------------
@@ -226,6 +520,15 @@
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+
+  &:hover {
+    border-color: var(--color-primary-soft);
+    box-shadow: var(--shadow-md);
+  }
 
   &__head {
     display: flex;
@@ -239,6 +542,13 @@
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     letter-spacing: -0.01em;
+  }
+
+  // View and Edit sit together on the right of the card header.
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   &__empty {
@@ -284,6 +594,7 @@
     height: 100%;
     border-radius: inherit;
     background: var(--color-primary);
+    transform-origin: left center;
   }
 
   &--over &__fill {
@@ -365,25 +676,210 @@
   }
 }
 
-// ---- Small screens --------------------------------------------------------------------------
-@media (max-width: 480px) {
-  .page {
-    padding-top: var(--space-6);
+// ---- Keyframes ---------------------------------------------------------------------------------
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+// Budget rows: a small hint of movement from the left.
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.9);
+  }
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes coin-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
   }
 
-  .budget {
-    padding: var(--space-4);
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Motion (only for people who have not asked for reduced motion) -----------------------------
+@media (prefers-reduced-motion: no-preference) {
+  // Buttons: hover lifts, press snaps down, icons react, fills sweep.
+  .btn {
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.94);
+      box-shadow: none;
+      transition-duration: 0.1s;
+    }
+
+    &.btn--primary:hover:not(:disabled)::before {
+      transform: translateX(120%);
+      transition: transform 0.7s ease;
+    }
+
+    &.btn--ghost:hover:not(:disabled)::before {
+      transform: scaleX(1);
+      transition: transform 0.3s ease;
+    }
+
+    &:hover:not(:disabled) .btn__icon--plus,
+    &:hover:not(:disabled) .btn__icon--close {
+      transform: rotate(90deg);
+    }
+
+    &:hover:not(:disabled) .btn__icon--next {
+      transform: translateX(3px);
+    }
+
+    &:hover:not(:disabled) .btn__icon--prev {
+      transform: translateX(-3px);
+    }
+
+    &:hover:not(:disabled) .btn__icon--edit {
+      transform: rotate(-12deg);
+    }
   }
 
-  .figures {
-    gap: var(--space-3) var(--space-5);
+  // Stepper and pills: same press language as the buttons.
+  .stepper__btn:active {
+    transform: scale(0.88);
   }
 
-  .filters .field {
-    width: 100%;
+  .pill {
+    animation: pop-in 0.3s var(--ease-spring) backwards;
+    animation-delay: calc(var(--k, 0) * 25ms + 150ms);
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: scale(0.94);
+      transition-duration: 0.1s;
+    }
   }
 
-  .field-row {
-    grid-template-columns: 1fr;
+  // Page entrance: header, then filters, then the list.
+  .page__head {
+    animation: fade-up 0.5s var(--ease-out) backwards;
+  }
+
+  .filters {
+    animation: fade-up 0.5s var(--ease-out) 0.08s backwards;
+  }
+
+  .filters__clear {
+    animation: pop-in 0.3s var(--ease-spring) backwards;
+  }
+
+  // Budget rows: each one slides in from the left a moment after the previous.
+  // The delay is fixed per position, so rows after the 12th share the last delay
+  // and the list never makes you wait.
+  // First load: slow and gentle. Later loads (.list--quick): short and snappy.
+  .list > li {
+    animation: row-in 0.55s var(--ease-out) backwards;
+    animation-delay: 1.2s;
+  }
+
+  .list--quick > li {
+    animation-duration: 0.3s;
+    animation-delay: 0.45s;
+  }
+
+  @for $n from 1 through 12 {
+    .list > li:nth-child(#{$n}) {
+      animation-delay: 0.15s + ($n - 1) * 0.09s;
+    }
+
+    .list--quick > li:nth-child(#{$n}) {
+      animation-delay: 0.05s + ($n - 1) * 0.035s;
+    }
+  }
+
+  .notice {
+    animation: notice-in 0.35s var(--ease-spring) backwards;
+  }
+
+  .field__error {
+    animation: fade-in 0.25s ease backwards;
+  }
+
+  // Loading skeleton: a soft light sweeping across, not a spinner.
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 0%,
+      var(--color-surface) 50%,
+      var(--color-border) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  // Empty state
+  .empty {
+    animation: fade-up 0.5s var(--ease-out)
   }
 }
