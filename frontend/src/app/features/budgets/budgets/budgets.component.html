@@ -186,12 +186,12 @@
                 </div>
                 <div class="figure">
                   <dt class="figure__label">Given to categories</dt>
-                  <dd class="figure__value num">{{ allocated(b) | currency: currencyCode }}</dd>
+                  <dd class="figure__value num">{{ b.givenToCategories | currency: currencyCode }}</dd>
                 </div>
                 <div class="figure">
                   <dt class="figure__label">{{ isOver(b) ? 'Over by' : 'Left to assign' }}</dt>
                   <dd class="figure__value num" [class.figure__value--over]="isOver(b)">
-                    {{ (isOver(b) ? -left(b) : left(b)) | currency: currencyCode }}
+                    {{ (isOver(b) ? b.overAllocatedAmount : b.leftToAssign) | currency: currencyCode }}
                   </dd>
                 </div>
               </dl>

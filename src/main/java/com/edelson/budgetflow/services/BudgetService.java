@@ -5,8 +5,10 @@ import com.edelson.budgetflow.dtos.requests.CreateBudgetRequest;
 import com.edelson.budgetflow.dtos.requests.UpdateBudgetRequest;
 import com.edelson.budgetflow.dtos.responses.BudgetResponse;
 import com.edelson.budgetflow.entities.Budget;
+import com.edelson.budgetflow.entities.BudgetCategory;
 import com.edelson.budgetflow.exceptions.DuplicateResourceExpception;
 import com.edelson.budgetflow.exceptions.ResourceNotFoundException;
+import com.edelson.budgetflow.mappers.BudgetCategoryMapper;
 import com.edelson.budgetflow.mappers.BudgetMapper;
 import com.edelson.budgetflow.repository.BudgetRepository;
 import com.edelson.budgetflow.specifications.BudgetSpecifications;
@@ -17,6 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor

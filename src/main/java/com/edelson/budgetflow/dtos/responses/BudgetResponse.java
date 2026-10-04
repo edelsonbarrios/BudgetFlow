@@ -8,5 +8,8 @@ public record BudgetResponse(
         Integer month,
         Integer year,
         BigDecimal totalIncome,
-        List<BudgetCategoryResponse> categories
+        List<BudgetCategoryResponse> categories,
+        BigDecimal leftToAssign,
+        BigDecimal givenToCategories,
+        BigDecimal overAllocatedAmount
 ) {}

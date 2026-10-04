@@ -17,7 +17,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Budget } from '../dtos/budget';
 import { BudgetCategory } from '../dtos/budget-category';
 import { BudgetCategoryService } from '../budget-category-service/budget-category.service';
-import { CURRENCY_CODE, allocatedTotal, leftToAssign, monthLabel } from '../budget-helpers/budget-helpers';
+import { CURRENCY_CODE, monthLabel } from '../budget-helpers/budget-helpers';
 
 /**
  * The popup for adding a category to a budget, or editing one.
@@ -30,6 +30,13 @@ import { CURRENCY_CODE, allocatedTotal, leftToAssign, monthLabel } from '../budg
  *
  * The dialog saves the category itself (POST or PUT) and then emits `saved`.
  * The parent decides what to do next (usually: load the budget again).
+ *
+ * The budget totals (givenToCategories, leftToAssign, overAllocatedAmount) come from the
+ * backend, so the budget passed to open() should be a fresh one.
+ *
+ * Over-allocation is allowed. If the typed amount would put the budget over its income,
+ * the first click on Save shows a confirmation inside the same dialog. Only "Save anyway"
+ * sends the request. The backend does not know about the confirmation.
  */
 @Component({
   selector: 'app-budget-category-dialog',
@@ -49,6 +56,8 @@ export class BudgetCategoryDialogComponent {
   @Output() readonly saved = new EventEmitter<BudgetCategory>();
 
   @ViewChild('dialog') private dialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('amountInput') private amountInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('goBackButton') private goBackButton?: ElementRef<HTMLButtonElement>;
 
   // ---- State ----
   /** The budget this category belongs to (or will belong to). */
@@ -57,17 +66,24 @@ export class BudgetCategoryDialogComponent {
   readonly editingCategoryId = signal<number | null>(null);
   readonly saving = signal(false);
   readonly formError = signal<string | null>(null);
+  /** true = the "This puts your budget over income. Save anyway?" step is showing. */
+  readonly confirmingOverAllocation = signal(false);
 
-  // ---- Values worked out from the budget, for the line under the title ----
+  // ---- Values read from the budget, for the line under the title ----
   readonly title = computed(() => {
     const budget = this.budget();
     return budget ? monthLabel(budget) : '';
   });
-  readonly left = computed(() => {
+  /** True when the budget's categories already add up to more than its income. */
+  readonly isOver = computed(() => (this.budget()?.overAllocatedAmount ?? 0) > 0);
+  /** The number shown in the hint: the over amount when over, otherwise what is left to assign. */
+  readonly hintAmount = computed(() => {
     const budget = this.budget();
-    return budget ? leftToAssign(budget) : 0;
+    if (budget === null) {
+      return 0;
+    }
+    return budget.overAllocatedAmount > 0 ? budget.overAllocatedAmount : budget.leftToAssign;
   });
-  readonly leftShown = computed(() => Math.abs(this.left()));
 
   /**
    * Same rules as CreateBudgetCategoryRequest and UpdateBudgetCategoryRequest on the backend.
@@ -77,6 +93,15 @@ export class BudgetCategoryDialogComponent {
     name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/\S/)]],
     allocatedAmount: [0, [Validators.required, Validators.min(0.01)]],
   });
+
+  constructor() {
+    // The confirmation message shows a specific amount. If the user changes any field,
+    // that amount may be out of date, so the confirmation step is dropped and the
+    // normal Save button comes back.
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.confirmingOverAllocation.set(false));
+  }
 
   /**
    * Opens the popup. Without a category it is a new one, with a category it is an edit.
@@ -90,6 +115,7 @@ export class BudgetCategoryDialogComponent {
       allocatedAmount: category?.allocatedAmount ?? 0,
     });
     this.formError.set(null);
+    this.confirmingOverAllocation.set(false);
     this.dialog?.nativeElement.showModal();
   }
 
@@ -100,15 +126,46 @@ export class BudgetCategoryDialogComponent {
   /** Runs when the popup closes in any way (Cancel, Escape, or after saving). */
   onClosed(): void {
     this.formError.set(null);
+    this.confirmingOverAllocation.set(false);
   }
 
+  /**
+   * Runs when the form is submitted (Save button or Enter key).
+   * If the amount puts the budget over income, this only shows the confirmation step.
+   * The request is sent by save(), from the "Save anyway" button.
+   */
   submit(): void {
-    const budget = this.budget();
-    if (budget === null) {
+    if (this.budget() === null) {
       return;
     }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+    // While the confirmation is showing, Enter must not count as "yes".
+    // The user has to click "Save anyway" on purpose.
+    if (this.confirmingOverAllocation()) {
+      return;
+    }
+    if (this.overBy() > 0) {
+      this.confirmingOverAllocation.set(true);
+      // The Save button disappears, so move focus to the safe choice.
+      setTimeout(() => this.goBackButton?.nativeElement.focus());
+      return;
+    }
+    this.save();
+  }
+
+  /** The user chose "Go back": return to editing, with the cursor in the amount field. */
+  goBack(): void {
+    this.confirmingOverAllocation.set(false);
+    this.amountInput?.nativeElement.focus();
+  }
+
+  /** Sends the request. Called directly when the amount fits, or from "Save anyway". */
+  save(): void {
+    const budget = this.budget();
+    if (budget === null || this.form.invalid) {
       return;
     }
 
@@ -125,6 +182,7 @@ export class BudgetCategoryDialogComponent {
           allocatedAmount,
         })
         : this.budgetCategoryService.updateCategory(id, {
+          budgetId: budget.id,
           name: trimmedName,
           allocatedAmount,
         });
@@ -140,6 +198,8 @@ export class BudgetCategoryDialogComponent {
       },
       error: (error: unknown) => {
         this.saving.set(false);
+        // Start the flow again, so the next Save asks for confirmation again.
+        this.confirmingOverAllocation.set(false);
         this.formError.set(this.errorMessage(error));
       },
     });
@@ -147,8 +207,12 @@ export class BudgetCategoryDialogComponent {
 
   /**
    * How much the budget would be over its income if the category were saved with the
-   * amount typed right now. 0 means it still fits. This only warns, it never blocks.
-   * When editing, the category's old amount is taken out first so it is not counted twice.
+   * amount typed right now. 0 means it still fits. It triggers the confirmation step,
+   * it never blocks saving.
+   *
+   * This stays on the frontend because it changes with every keystroke. It starts from the
+   * backend's givenToCategories. When editing, the category's old amount is taken out first
+   * so it is not counted twice.
    */
   overBy(): number {
     const budget = this.budget();
@@ -158,7 +222,7 @@ export class BudgetCategoryDialogComponent {
     const typed = this.form.controls.allocatedAmount.value || 0;
     const editingId = this.editingCategoryId();
     const oldAmount = budget.categories.find((c) => c.id === editingId)?.allocatedAmount ?? 0;
-    const over = allocatedTotal(budget) - oldAmount + typed - budget.totalIncome;
+    const over = budget.givenToCategories - oldAmount + typed - budget.totalIncome;
     return over > 0 ? over : 0;
   }
 

@@ -6,4 +6,7 @@ export interface Budget {
   year: number;
   totalIncome: number;
   categories: BudgetCategory[];
+  leftToAssign: number;
+  givenToCategories : number;
+  overAllocatedAmount: number;
 }

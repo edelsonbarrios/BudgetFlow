@@ -11,8 +11,6 @@ import { BudgetCategoryDialogComponent } from '../budget-category-dialog/budget-
 import {
   CURRENCY_CODE,
   allocatedPercent,
-  allocatedTotal,
-  leftToAssign,
   monthLabel,
 } from '../budget-helpers/budget-helpers';
 
@@ -47,22 +45,28 @@ export class BudgetDetailComponent implements OnInit {
   readonly loadError = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
 
-  // ---- Values worked out from the budget (they update by themselves) ----
+  // ---- Values read from the budget (they update by themselves) ----
+  // The totals are calculated by the backend. "?? 0" is only for the moment before the
+  // budget has loaded, so these always return a number.
   readonly title = computed(() => {
     const budget = this.budget();
     return budget ? monthLabel(budget) : '';
   });
-  readonly allocated = computed(() => {
+  readonly allocated = computed(() => this.budget()?.givenToCategories ?? 0);
+  readonly left = computed(() => this.budget()?.leftToAssign ?? 0);
+  /** True when the categories add up to more than the income. The backend decides this. */
+  readonly isOver = computed(() => (this.budget()?.overAllocatedAmount ?? 0) > 0);
+  /**
+   * The number shown next to the "Over by" / "Left to assign" label.
+   * The backend keeps the two fields apart (only one is above 0), so no sign flipping is needed.
+   */
+  readonly leftShown = computed(() => {
     const budget = this.budget();
-    return budget ? allocatedTotal(budget) : 0;
+    if (budget === null) {
+      return 0;
+    }
+    return budget.overAllocatedAmount > 0 ? budget.overAllocatedAmount : budget.leftToAssign;
   });
-  readonly left = computed(() => {
-    const budget = this.budget();
-    return budget ? leftToAssign(budget) : 0;
-  });
-  readonly isOver = computed(() => this.left() < 0);
-  /** "Over by" shows a positive number, so we take the absolute value. */
-  readonly leftShown = computed(() => Math.abs(this.left()));
   readonly percent = computed(() => {
     const budget = this.budget();
     return budget ? allocatedPercent(budget) : 0;

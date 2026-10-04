@@ -43,6 +43,27 @@
     gap: var(--space-2);
     margin-top: var(--space-2);
   }
+
+  // The "over income, save anyway?" step. Amber like the warning text, because it is a
+  // decision to confirm, not an error.
+  &__confirm {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--color-warning);
+    border-radius: var(--radius-md);
+
+    // The confirm box already has its own spacing.
+    .dialog__actions {
+      margin-top: 0;
+    }
+  }
+
+  &__confirm-text {
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
 }
 
 .field {

@@ -7,8 +7,8 @@
       </h2>
       @if (budget()) {
         <p class="dialog__hint num">
-          {{ title() }}: {{ leftShown() | currency: currencyCode }}
-          {{ left() < 0 ? 'over income' : 'left to assign' }}
+          {{ title() }}: {{ hintAmount() | currency: currencyCode }}
+          {{ isOver() ? 'over income' : 'left to assign' }}
         </p>
       }
     </div>
@@ -35,6 +35,7 @@
     <div class="field">
       <label class="field__label" for="category-amount">Amount for this month</label>
       <input
+        #amountInput
         id="category-amount"
         class="field__control"
         type="number"
@@ -55,11 +56,10 @@
         <p id="category-amount-error" class="field__error">Enter an amount above 0.</p>
       }
 
-      <!-- Only a warning: the user can still save. -->
+      <!-- A live heads-up while typing. The confirmation step below is what asks the user to decide. -->
       @if (overBy() > 0) {
         <p class="field__warning num" role="status">
-          This puts the budget over its income by {{ overBy() | currency: currencyCode }}. You can
-          still save it.
+          This puts the budget over its income by {{ overBy() | currency: currencyCode }}.
         </p>
       }
     </div>
@@ -68,11 +68,34 @@
       <p class="field__error" role="alert">{{ formError() }}</p>
     }
 
-    <div class="dialog__actions">
-      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
-      <button type="submit" class="btn btn--primary" [disabled]="saving()">
-        {{ saving() ? 'Saving…' : 'Save category' }}
-      </button>
-    </div>
+    @if (confirmingOverAllocation()) {
+      <!-- Second step, same dialog: the user must click "Save anyway" on purpose. -->
+      <div class="dialog__confirm" role="alert">
+        <p class="dialog__confirm-text num">
+          This puts your budget {{ overBy() | currency: currencyCode }} over income. Save anyway?
+        </p>
+        <div class="dialog__actions">
+          <button
+            #goBackButton
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="saving()"
+            (click)="goBack()"
+          >
+            Go back
+          </button>
+          <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="save()">
+            {{ saving() ? 'Saving…' : 'Save anyway' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save category' }}
+        </button>
+      </div>
+    }
   </form>
 </dialog>

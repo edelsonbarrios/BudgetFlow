@@ -31,11 +31,11 @@ public class BudgetController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "12") int size, Sort sort) {
         Pageable pageable = PageRequest.of(
                 page - 1,
                 size,
-                Sort.by(Sort.Direction.DESC, "year", "month")
+                Sort.by(Sort.Order.asc("year"), Sort.Order.asc("month"), Sort.Order.desc("category.id"))
         );
         return  budgetService.filterBudgetsByMonthAndYear(month, year, pageable);
     }

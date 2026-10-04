@@ -29,5 +29,25 @@ public class Budget {
 
 
     @OneToMany(mappedBy = "budget", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id DESC")
     private List<BudgetCategory> categories = new ArrayList<>();
+
+    @Transient
+    public BigDecimal getGivenToCategories() {
+        return categories.stream()
+                .map(BudgetCategory::getAllocatedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Transient
+    public BigDecimal getLeftToAssign() {
+        return totalIncome.subtract(getGivenToCategories()).max(BigDecimal.ZERO);
+    }
+
+    @Transient
+    public BigDecimal getOverAllocatedAmount() {
+        return getGivenToCategories()
+                .subtract(totalIncome)
+                .max(BigDecimal.ZERO);
+    }
 }

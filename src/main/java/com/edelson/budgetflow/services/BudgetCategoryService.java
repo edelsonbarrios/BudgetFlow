@@ -5,6 +5,7 @@ import com.edelson.budgetflow.dtos.requests.UpdateBudgetCategoryRequest;
 import com.edelson.budgetflow.dtos.responses.BudgetCategoryResponse;
 import com.edelson.budgetflow.entities.Budget;
 import com.edelson.budgetflow.entities.BudgetCategory;
+import com.edelson.budgetflow.exceptions.BusinessRuleException;
 import com.edelson.budgetflow.exceptions.DuplicateResourceExpception;
 import com.edelson.budgetflow.exceptions.ResourceNotFoundException;
 import com.edelson.budgetflow.mappers.BudgetCategoryMapper;
@@ -14,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
