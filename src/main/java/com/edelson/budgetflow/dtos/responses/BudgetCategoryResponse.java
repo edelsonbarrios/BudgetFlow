@@ -7,5 +7,8 @@ public record BudgetCategoryResponse(
         Long budgetId,
         Long categoryId,
         String name,
-        BigDecimal allocatedAmount
+        BigDecimal allocatedAmount,
+        BigDecimal spentAmount,
+        BigDecimal remainingAmount,
+        BigDecimal percentUsed
 ) {}

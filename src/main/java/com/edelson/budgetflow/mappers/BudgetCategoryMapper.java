@@ -3,6 +3,7 @@ package com.edelson.budgetflow.mappers;
 import com.edelson.budgetflow.dtos.requests.CreateBudgetCategoryRequest;
 import com.edelson.budgetflow.dtos.requests.UpdateBudgetCategoryRequest;
 import com.edelson.budgetflow.dtos.responses.BudgetCategoryResponse;
+import com.edelson.budgetflow.dtos.responses.CategorySummaryResponse;
 import com.edelson.budgetflow.entities.BudgetCategory;
 import org.mapstruct.*;
 
@@ -20,4 +21,12 @@ public interface BudgetCategoryMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "budget", ignore = true)
     void updateCategory(UpdateBudgetCategoryRequest request, @MappingTarget BudgetCategory category);
+
+    @Mapping(target = "budgetCategoryId", source = "id")
+    @Mapping(target = "name", source = "category.name")
+    @Mapping(
+            target = "alert",
+            expression = "java(BudgetAlert.of(category.getPercentUsed(), category.getAllocatedAmount()))"
+    )
+    CategorySummaryResponse toSummaryResponse(BudgetCategory category);
 }

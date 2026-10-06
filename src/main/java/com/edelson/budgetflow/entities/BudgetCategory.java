@@ -41,7 +41,7 @@ public class BudgetCategory {
 
     @Transient
     public BigDecimal getRemainingAmount() {
-        return allocatedAmount.subtract(getSpentAmount()).max(BigDecimal.ZERO);
+        return allocatedAmount.subtract(getSpentAmount());
     }
 
     @Transient

@@ -12,4 +12,5 @@ public interface BudgetCategoryRepository extends JpaRepository<BudgetCategory, 
     boolean existsByBudgetIdAndCategoryId(Long budgetId, Long categoryId);
     boolean existsByBudgetIdAndCategoryIdAndIdNot(Long budgetId, Long categoryId, Long budgetCategoryId);
     List<BudgetCategory> findAllByBudgetId(Long budgetId);
+    Optional<BudgetCategory> findByCategoryNameIgnoreCase(String name);
 }

@@ -2,6 +2,7 @@ package com.edelson.budgetflow.mappers;
 
 import com.edelson.budgetflow.dtos.requests.CreateBudgetRequest;
 import com.edelson.budgetflow.dtos.requests.UpdateBudgetRequest;
+import com.edelson.budgetflow.dtos.responses.BudgetSummaryResponse;
 import com.edelson.budgetflow.entities.Budget;
 import org.mapstruct.*;
 import com.edelson.budgetflow.dtos.responses.BudgetResponse;
@@ -21,4 +22,11 @@ public interface BudgetMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "categories", ignore = true)
     void updateEntity(UpdateBudgetRequest request, @MappingTarget Budget budget);
+
+    @Mapping(target = "budgetId", source = "id")
+    @Mapping(
+            target = "alert",
+            expression = "java(BudgetAlert.of(budget.getTotalSpent(), budget.getTotalIncome()))"
+    )
+    BudgetSummaryResponse toSummaryResponse(Budget budget);
 }

@@ -1,1 +1,192 @@
-<p>dashboard works!</p>
+<section class="page">
+  <div class="container">
+    <header class="page__head">
+      <div>
+        <h1 class="page__title">Dashboard</h1>
+        <p class="page__text">How this month is going, and where your money is.</p>
+      </div>
+
+      <div class="month-nav" role="group" aria-label="Choose month">
+        <div class="stepper">
+          <button
+            type="button"
+            class="stepper__btn"
+            aria-label="Previous month"
+            (click)="stepMonth(-1)"
+          >
+            <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+          </button>
+          <p class="stepper__label" aria-live="polite">{{ monthLabel() }}</p>
+          <button
+            type="button"
+            class="stepper__btn"
+            aria-label="Next month"
+            (click)="stepMonth(1)"
+          >
+            <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+        <button
+          type="button"
+          class="btn btn--ghost"
+          [disabled]="isCurrentMonth()"
+          (click)="goToCurrentMonth()"
+        >
+          This month
+        </button>
+      </div>
+    </header>
+
+    <!-- States: loading, no budget this month, error, or the dashboard -->
+    @if (loading()) {
+      <p class="sr-only" role="status">Loading dashboard</p>
+      <div class="skeletons" aria-hidden="true">
+        @for (n of skeletonRows; track n) {
+          <div class="skeleton"></div>
+        }
+      </div>
+    } @else if (notFound()) {
+      <div class="empty">
+        <svg class="empty__art" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+          <circle class="empty__glow" cx="60" cy="52" r="40" />
+          <rect class="empty__wallet" x="32" y="38" width="56" height="36" rx="10" />
+          <path class="empty__line" d="M32 51h56" />
+          <circle class="empty__coin" cx="77" cy="62" r="5" />
+        </svg>
+        <h2 class="empty__title">No budget for {{ monthLabel() }}</h2>
+        <p class="empty__text">
+          Create a budget for this month to see how your money is doing.
+        </p>
+        <a class="btn btn--primary" routerLink="/app/budgets">
+          <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Create a budget
+        </a>
+      </div>
+    } @else if (loadError()) {
+      <div class="notice notice--error" role="alert">
+        <span>{{ loadError() }}</span>
+        <button type="button" class="btn btn--ghost" (click)="load()">Try again</button>
+      </div>
+    } @else {
+      @if (summary(); as s) {
+        <!-- Categories add up to more than the income -->
+        @if (isOverAllocated()) {
+          <div class="notice notice--warning" role="status">
+            <span>
+              Your categories add up to
+              {{ s.overAllocatedAmount | currency: currencyCode }} more than your income.
+              "Left to spend" uses your real income, not the category limits.
+            </span>
+            <a class="btn btn--ghost" [routerLink]="['/app/budgets', s.budgetId]">
+              Review categories
+              <svg class="btn__icon btn__icon--next" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </div>
+        }
+
+        <!-- The big number -->
+        <section class="hero" [attr.data-alert]="s.alert" aria-label="Month overview">
+          <div class="hero__top">
+            <div>
+              <p class="hero__label">{{ leftIsNegative() ? 'Over income by' : 'Left to spend' }}</p>
+              <p class="hero__value num" [class.hero__value--over]="leftIsNegative()">
+                {{ leftShown() | currency: currencyCode }}
+              </p>
+              <p class="hero__message">{{ summaryMessage(s.alert) }}</p>
+            </div>
+            <span class="status">{{ statusText(s.alert) }}</span>
+          </div>
+
+          <div
+            class="bar"
+            role="progressbar"
+            aria-label="Income spent"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="barFill()"
+            [attr.aria-valuetext]="s.percentUsed + ' percent of income spent'"
+          >
+            <div class="bar__fill" [style.width.%]="barFill()"></div>
+          </div>
+          <p class="hero__percent num">{{ s.percentUsed }}% of income spent</p>
+
+          <dl class="figures">
+            <div class="figure">
+              <dt class="figure__label">Income</dt>
+              <dd class="figure__value num">{{ s.totalIncome | currency: currencyCode }}</dd>
+            </div>
+            <div class="figure">
+              <dt class="figure__label">Budgeted</dt>
+              <dd class="figure__value num">{{ s.givenToCategories | currency: currencyCode }}</dd>
+            </div>
+            <div class="figure">
+              <dt class="figure__label">Spent</dt>
+              <dd class="figure__value num">{{ s.totalSpent | currency: currencyCode }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Categories -->
+        <h2 class="section-title">Categories</h2>
+
+        @if (s.categories.length > 0) {
+          <ul class="rows" [class.rows--quick]="quickReplay()">
+            @for (c of s.categories; track c.budgetCategoryId) {
+              <li class="row" [attr.data-alert]="c.alert">
+                <div class="row__top">
+                  <p class="row__name">{{ c.name }}</p>
+                  <p class="row__amounts num">
+                    <span class="row__spent">{{ c.spentAmount | currency: currencyCode }}</span>
+                    <span class="row__of"> / {{ c.allocatedAmount | currency: currencyCode }}</span>
+                  </p>
+                </div>
+
+                <div
+                  class="bar"
+                  role="progressbar"
+                  [attr.aria-label]="c.name + ' budget used'"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="barWidth(c.percentUsed)"
+                  [attr.aria-valuetext]="c.percentUsed + ' percent used'"
+                >
+                  <div class="bar__fill" [style.width.%]="barWidth(c.percentUsed)"></div>
+                </div>
+
+                <div class="row__bottom">
+                  <span class="status">{{ statusText(c.alert) }}</span>
+                  <span class="row__left num">
+                    @if (c.remainingAmount < 0) {
+                      {{ absolute(c.remainingAmount) | currency: currencyCode }} over
+                    } @else {
+                      {{ c.remainingAmount | currency: currencyCode }} left
+                    }
+                  </span>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="empty empty--small">
+            <p class="empty__title">No categories yet</p>
+            <p class="empty__text">Add categories to this budget to see where your money goes.</p>
+            <a class="btn btn--primary" [routerLink]="['/app/budgets', s.budgetId]">
+              Add categories
+              <svg class="btn__icon btn__icon--next" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+          </div>
+        }
+      }
+    }
+  </div>
+</section>
