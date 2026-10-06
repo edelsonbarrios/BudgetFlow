@@ -14,6 +14,8 @@
   background: var(--color-surface);
   color: var(--color-text);
   box-shadow: var(--shadow-md);
+  // The category list floats over the fields below it, so it must not be clipped.
+  overflow: visible;
 
   &::backdrop {
     background: rgba(28, 43, 42, 0.4);
@@ -99,10 +101,34 @@
     }
   }
 
+  // The category name while editing: plain text, because it cannot be changed there.
+  &__static {
+    padding: var(--space-2) 0;
+    font-weight: var(--font-weight-medium);
+  }
+
+  // Quiet helper text, for example "Every category is already in this budget."
+  &__hint {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
   &__error {
     color: var(--color-exceeded);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
+  }
+
+  // The "Try again" button inside an error line. It looks like a link, not a full button.
+  &__link {
+    margin-left: var(--space-1);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   // A gentle heads-up (amber, same family as the WARNING status). It never blocks saving.
@@ -110,5 +136,67 @@
     color: var(--color-warning);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
+  }
+}
+
+// The category dropdown: a button that opens a short list with its own scrollbar.
+// It is defined after .field so its background-image wins over .field__control.
+.picker {
+  position: relative;
+
+  &__trigger {
+    display: block;
+    text-align: left;
+    cursor: pointer;
+    padding-right: var(--space-6);
+    // A small chevron drawn with two gradients (no image file needed).
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+      linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) 55%,
+      calc(100% - 14px) 55%;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+  }
+
+  &__placeholder {
+    color: var(--color-text-muted);
+  }
+
+  // About five rows tall. More than that scrolls inside the list.
+  &__list {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 176px;
+    margin: 0;
+    padding: var(--space-1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  &__option {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+
+    // Highlighted by mouse or keyboard.
+    &[data-active='true'] {
+      background: color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+
+    // The category that is currently chosen.
+    &[aria-selected='true'] {
+      font-weight: var(--font-weight-bold);
+    }
   }
 }

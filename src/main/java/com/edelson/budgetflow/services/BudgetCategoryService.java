@@ -5,17 +5,16 @@ import com.edelson.budgetflow.dtos.requests.UpdateBudgetCategoryRequest;
 import com.edelson.budgetflow.dtos.responses.BudgetCategoryResponse;
 import com.edelson.budgetflow.entities.Budget;
 import com.edelson.budgetflow.entities.BudgetCategory;
-import com.edelson.budgetflow.exceptions.BusinessRuleException;
+import com.edelson.budgetflow.entities.Category;
 import com.edelson.budgetflow.exceptions.DuplicateResourceExpception;
 import com.edelson.budgetflow.exceptions.ResourceNotFoundException;
 import com.edelson.budgetflow.mappers.BudgetCategoryMapper;
 import com.edelson.budgetflow.repository.BudgetCategoryRepository;
 import com.edelson.budgetflow.repository.BudgetRepository;
+import com.edelson.budgetflow.repository.CategoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -24,6 +23,7 @@ public class BudgetCategoryService {
     private final BudgetCategoryRepository budgetCategoryRepository;
     private final BudgetCategoryMapper budgetCategoryMapper;
     private final BudgetRepository budgetRepository;
+    private final CategoryRepository categoryRepository;
 
     public BudgetCategoryResponse getCategoryById(
             Long id
@@ -44,12 +44,16 @@ public class BudgetCategoryService {
                 request.budgetId()
         ).orElseThrow(() -> new ResourceNotFoundException("Budget record does not exist."));
 
-        if(this.budgetCategoryRepository.existsByBudgetIdAndNameIgnoreCase(budget.getId(), request.name().trim())){
-            throw new DuplicateResourceExpception("Budget category %s already exists".formatted(request.name()));
+        var category = this.categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Budget category record does not exist"));
+
+        if(this.budgetCategoryRepository.existsByBudgetIdAndCategoryId(budget.getId(), category.getId())){
+            throw new DuplicateResourceExpception("Budget category %s already exists".formatted(category.getName()));
         }
 
         var newBudgetCategory = this.budgetCategoryMapper.toEntity(request);
         newBudgetCategory.setBudget(budget);
+        newBudgetCategory.setCategory(category);
 
         var insertBudgetCategory = this.budgetCategoryRepository.save(newBudgetCategory);
 
@@ -67,22 +71,26 @@ public class BudgetCategoryService {
         Budget budget = budgetRepository.findById(request.budgetId())
                 .orElseThrow(() -> new ResourceNotFoundException("Budget reference for this category is missing"));
 
-        boolean alreadyExists = budgetCategoryRepository.existsByBudgetIdAndNameIgnoreCaseAndIdNot(
+        Category category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category record does not exist"));
+
+        boolean alreadyExists = budgetCategoryRepository.existsByBudgetIdAndCategoryIdAndIdNot(
                 budget.getId(),
-                request.name(),
+                category.getId(),
                 id
         );
 
         if(alreadyExists) {
-            throw new DuplicateResourceExpception("Budget category name already exists");
+            throw new DuplicateResourceExpception("Budget category already exists");
         }
 
         budgetCategoryMapper.updateCategory(request, budgetCategoryToUpdate);
+        budgetCategoryToUpdate.setCategory(category);
         return budgetCategoryMapper.toResponse(budgetCategoryToUpdate);
     }
 
     public List<BudgetCategoryResponse> getAllCategoriesByBudgetId(
-            Integer budgetId
+            Long budgetId
     )  {
         return budgetCategoryRepository.findAllByBudgetId(budgetId)
                 .stream()

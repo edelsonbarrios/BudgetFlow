@@ -14,21 +14,82 @@
     </div>
 
     <div class="field">
-      <label class="field__label" for="category-name">Name</label>
-      <input
-        id="category-name"
-        class="field__control"
-        type="text"
-        maxlength="100"
-        placeholder="For example, Groceries"
-        formControlName="name"
-        [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid"
-        [attr.aria-describedby]="
-          form.controls.name.touched && form.controls.name.invalid ? 'category-name-error' : null
-        "
-      />
-      @if (form.controls.name.touched && form.controls.name.invalid) {
-        <p id="category-name-error" class="field__error">Enter a name up to 100 characters.</p>
+      @if (editingCategoryId() === null) {
+        <!-- Adding: pick from the shared category list. -->
+        <label class="field__label" for="category-picker">Category</label>
+        <div class="picker">
+          <button
+            id="category-picker"
+            type="button"
+            class="field__control picker__trigger"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-controls="category-listbox"
+            [attr.aria-expanded]="categoryOpen()"
+            [attr.aria-activedescendant]="activeOptionId()"
+            [attr.aria-invalid]="
+              form.controls.categoryId.touched && form.controls.categoryId.invalid
+            "
+            [attr.aria-describedby]="categorySelectDescribedBy()"
+            (click)="toggleCategoryList()"
+            (keydown)="onCategoryKeydown($event)"
+            (keyup.space)="$event.preventDefault()"
+            (blur)="closeCategoryList()"
+          >
+            @if (selectedCategoryName(); as name) {
+              {{ name }}
+            } @else {
+              <span class="picker__placeholder">
+                {{ categoriesLoading() ? 'Loading categories…' : 'Choose a category' }}
+              </span>
+            }
+          </button>
+
+          @if (categoryOpen()) {
+            <!-- mousedown is blocked so the button keeps focus and does not close the list early. -->
+            <ul
+              #categoryList
+              id="category-listbox"
+              class="picker__list"
+              role="listbox"
+              aria-label="Categories"
+              (mousedown)="$event.preventDefault()"
+            >
+              @for (category of availableCategories(); track category.id; let i = $index) {
+                <li
+                  class="picker__option"
+                  role="option"
+                  [id]="'category-option-' + category.id"
+                  [attr.aria-selected]="category.id === form.controls.categoryId.value"
+                  [attr.data-active]="i === activeOptionIndex()"
+                  (mouseenter)="activeOptionIndex.set(i)"
+                  (click)="chooseCategory(category)"
+                >
+                  {{ category.name }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        @if (categoriesError()) {
+          <p id="category-select-error" class="field__error" role="alert">
+            We could not load the categories.
+            <button type="button" class="field__link" (click)="loadCategories()">Try again</button>
+          </p>
+        } @else if (allCategoriesUsed()) {
+          <p id="category-select-hint" class="field__hint">
+            Every category is already in this budget.
+          </p>
+        } @else if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
+          <p id="category-select-error" class="field__error">Choose a category.</p>
+        }
+      } @else {
+        <!-- Editing: the category is fixed, because expenses are attached to this row. -->
+        <span class="field__label" id="category-readonly-label">Category</span>
+        <p class="field__static" aria-labelledby="category-readonly-label">
+          {{ editingCategoryName() }}
+        </p>
       }
     </div>
 

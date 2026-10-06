@@ -20,13 +20,11 @@ export class BudgetCategoryService {
   private readonly baseUrl = `${DevelopmentUrl}/api/budget-categories`
 
   createCategory(request: CreateBudgetCategoryRequest): Observable<BudgetCategory> {
+    console.log(`${JSON.stringify(request)}`);
     return this.http.post<BudgetCategory>(this.baseUrl, request);
   }
 
   updateCategory(id: number, request: UpdateBudgetCategoryRequest): Observable<BudgetCategory> {
-    console.log(`Update is being called here.`);
-    console.log(`Budget Category Identifier: ${id}`);
-    console.log(`Request body: ${JSON.stringify(request)}`);
     return this.http.put<BudgetCategory>(`${this.baseUrl}/${id}`, request);
   }
 }

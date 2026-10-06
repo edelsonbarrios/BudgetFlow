@@ -16,7 +16,9 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 
 import { Budget } from '../dtos/budget';
 import { BudgetCategory } from '../dtos/budget-category';
+import { Category } from '../dtos/category';
 import { BudgetCategoryService } from '../budget-category-service/budget-category.service';
+import { CategoryService } from '../category-service/category.service';
 import { CURRENCY_CODE, monthLabel } from '../budget-helpers/budget-helpers';
 
 /**
@@ -27,6 +29,13 @@ import { CURRENCY_CODE, monthLabel } from '../budget-helpers/budget-helpers';
  *   <app-budget-category-dialog #categoryDialog (saved)="onCategorySaved($event)" />
  *   <button (click)="categoryDialog.open(budget)">Add category</button>
  *   <button (click)="categoryDialog.open(budget, category)">Edit</button>
+ *
+ * The category is chosen from the shared `categories` list (loaded from /api/categories).
+ *  - Adding: a dropdown. Categories already in this budget are left out, so the user
+ *    cannot pick a duplicate.
+ *  - Editing: the category is shown read-only, only the amount can change. Expenses are
+ *    attached to this row, so switching "Foods" to "Shopping" would silently move them.
+ *    To use another category, add a new row instead.
  *
  * The dialog saves the category itself (POST or PUT) and then emits `saved`.
  * The parent decides what to do next (usually: load the budget again).
@@ -47,6 +56,7 @@ import { CURRENCY_CODE, monthLabel } from '../budget-helpers/budget-helpers';
 })
 export class BudgetCategoryDialogComponent {
   private readonly budgetCategoryService = inject(BudgetCategoryService);
+  private readonly categoryService = inject(CategoryService);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -58,16 +68,44 @@ export class BudgetCategoryDialogComponent {
   @ViewChild('dialog') private dialog?: ElementRef<HTMLDialogElement>;
   @ViewChild('amountInput') private amountInput?: ElementRef<HTMLInputElement>;
   @ViewChild('goBackButton') private goBackButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('categoryList') private categoryList?: ElementRef<HTMLUListElement>;
 
   // ---- State ----
   /** The budget this category belongs to (or will belong to). */
   readonly budget = signal<Budget | null>(null);
-  /** null = adding a new category, a number = editing that category. */
+  /** null = adding a new category, a number = editing that budget category row. */
   readonly editingCategoryId = signal<number | null>(null);
+  /** The name shown (read-only) while editing. */
+  readonly editingCategoryName = signal('');
   readonly saving = signal(false);
   readonly formError = signal<string | null>(null);
   /** true = the "This puts your budget over income. Save anyway?" step is showing. */
   readonly confirmingOverAllocation = signal(false);
+
+  // ---- Dropdown data ----
+  /** Every category from the shared `categories` table. */
+  readonly categories = signal<Category[]>([]);
+  readonly categoriesLoading = signal(false);
+  readonly categoriesError = signal(false);
+  /** true = the dropdown list is showing. */
+  readonly categoryOpen = signal(false);
+  /** Index (in availableCategories) of the option highlighted by keyboard or mouse. */
+  readonly activeOptionIndex = signal(0);
+
+  /** Categories the user can still add: the ones this budget does not already use. */
+  readonly availableCategories = computed(() => {
+    const usedIds = new Set((this.budget()?.categories ?? []).map((c) => c.categoryId));
+    return this.categories().filter((c) => !usedIds.has(c.id));
+  });
+
+  /** Loaded fine, but every category is already in this budget. */
+  readonly allCategoriesUsed = computed(
+    () =>
+      !this.categoriesLoading() &&
+      !this.categoriesError() &&
+      this.categories().length > 0 &&
+      this.availableCategories().length === 0,
+  );
 
   // ---- Values read from the budget, for the line under the title ----
   readonly title = computed(() => {
@@ -87,10 +125,10 @@ export class BudgetCategoryDialogComponent {
 
   /**
    * Same rules as CreateBudgetCategoryRequest and UpdateBudgetCategoryRequest on the backend.
-   * The pattern rejects a name made only of spaces. The amount must be above 0.
+   * categoryId is null until the user picks one. The amount must be above 0.
    */
   readonly form = this.fb.group({
-    name: ['', [Validators.required, Validators.maxLength(100), Validators.pattern(/\S/)]],
+    categoryId: this.fb.control<number | null>(null, [Validators.required]),
     allocatedAmount: [0, [Validators.required, Validators.min(0.01)]],
   });
 
@@ -110,12 +148,22 @@ export class BudgetCategoryDialogComponent {
   open(budget: Budget, category?: BudgetCategory): void {
     this.budget.set(budget);
     this.editingCategoryId.set(category?.id ?? null);
+    this.editingCategoryName.set(category?.name ?? '');
     this.form.reset({
-      name: category?.name ?? '',
+      categoryId: category?.categoryId ?? null,
       allocatedAmount: category?.allocatedAmount ?? 0,
     });
     this.formError.set(null);
     this.confirmingOverAllocation.set(false);
+
+    this.categoryOpen.set(false);
+
+    // The dropdown is only shown when adding, so only load then. Loading on every open
+    // keeps the list fresh if categories were added since the last time.
+    if (category === undefined) {
+      this.loadCategories();
+    }
+
     this.dialog?.nativeElement.showModal();
   }
 
@@ -125,8 +173,29 @@ export class BudgetCategoryDialogComponent {
 
   /** Runs when the popup closes in any way (Cancel, Escape, or after saving). */
   onClosed(): void {
+    this.categoryOpen.set(false);
     this.formError.set(null);
     this.confirmingOverAllocation.set(false);
+  }
+
+  /** Loads the category list. Also used by the "Try again" button. */
+  loadCategories(): void {
+    this.categoriesLoading.set(true);
+    this.categoriesError.set(false);
+
+    this.categoryService
+      .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (categories) => {
+          this.categories.set(categories);
+          this.categoriesLoading.set(false);
+        },
+        error: () => {
+          this.categoriesError.set(true);
+          this.categoriesLoading.set(false);
+        },
+      });
   }
 
   /**
@@ -169,21 +238,24 @@ export class BudgetCategoryDialogComponent {
       return;
     }
 
-    const { name, allocatedAmount } = this.form.getRawValue();
-    const trimmedName = name.trim();
+    const { categoryId, allocatedAmount } = this.form.getRawValue();
+    if (categoryId === null) {
+      return;
+    }
     const id = this.editingCategoryId();
 
-    // Create needs the budgetId in the body. Edit does not: the category id goes in the URL.
+    // Create needs the budgetId in the body. Edit does not: the row id goes in the URL,
+    // and the row already knows its budget.
     const call =
       id === null
         ? this.budgetCategoryService.createCategory({
           budgetId: budget.id,
-          name: trimmedName,
+          categoryId,
           allocatedAmount,
         })
         : this.budgetCategoryService.updateCategory(id, {
           budgetId: budget.id,
-          name: trimmedName,
+          categoryId,
           allocatedAmount,
         });
 
@@ -226,6 +298,122 @@ export class BudgetCategoryDialogComponent {
     return over > 0 ? over : 0;
   }
 
+  // ---- Category dropdown (custom, so the list can be short and scrollable) ----
+
+  /** The name of the chosen category, or null when nothing is chosen yet. */
+  selectedCategoryName(): string | null {
+    const id = this.form.controls.categoryId.value;
+    return this.categories().find((c) => c.id === id)?.name ?? null;
+  }
+
+  /** The DOM id of the highlighted option, for aria-activedescendant. */
+  activeOptionId(): string | null {
+    const option = this.availableCategories()[this.activeOptionIndex()];
+    return this.categoryOpen() && option ? `category-option-${option.id}` : null;
+  }
+
+  toggleCategoryList(): void {
+    if (this.categoryOpen()) {
+      this.closeCategoryList();
+    } else {
+      this.openCategoryList();
+    }
+  }
+
+  openCategoryList(): void {
+    if (this.categoriesLoading() || this.availableCategories().length === 0) {
+      return;
+    }
+    const selectedId = this.form.controls.categoryId.value;
+    const index = this.availableCategories().findIndex((c) => c.id === selectedId);
+    this.activeOptionIndex.set(index >= 0 ? index : 0);
+    this.categoryOpen.set(true);
+    this.scrollActiveOptionIntoView();
+  }
+
+  /** Also runs when the button loses focus, which counts as "the user is done with it". */
+  closeCategoryList(): void {
+    this.categoryOpen.set(false);
+    this.form.controls.categoryId.markAsTouched();
+  }
+
+  chooseCategory(category: Category): void {
+    this.form.controls.categoryId.setValue(category.id);
+    this.closeCategoryList();
+  }
+
+  /** Keyboard support: arrows move, Enter or Space choose, Escape closes only the list. */
+  onCategoryKeydown(event: KeyboardEvent): void {
+    const options = this.availableCategories();
+    const open = this.categoryOpen();
+
+    switch (event.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        event.preventDefault();
+        if (!open) {
+          this.openCategoryList();
+          return;
+        }
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        const next = Math.min(Math.max(this.activeOptionIndex() + step, 0), options.length - 1);
+        this.activeOptionIndex.set(next);
+        this.scrollActiveOptionIntoView();
+        return;
+      }
+      case 'Home':
+      case 'End':
+        if (open) {
+          event.preventDefault();
+          this.activeOptionIndex.set(event.key === 'Home' ? 0 : options.length - 1);
+          this.scrollActiveOptionIntoView();
+        }
+        return;
+      case 'Enter':
+      case ' ':
+        if (open) {
+          event.preventDefault();
+          const option = options[this.activeOptionIndex()];
+          if (option) {
+            this.chooseCategory(option);
+          }
+        }
+        return;
+      case 'Escape':
+        if (open) {
+          // Without this, Escape would also close the whole dialog.
+          event.preventDefault();
+          event.stopPropagation();
+          this.closeCategoryList();
+        }
+        return;
+      case 'Tab':
+        this.closeCategoryList();
+        return;
+    }
+  }
+
+  /** Keeps the highlighted option visible inside the scrollable list. */
+  private scrollActiveOptionIntoView(): void {
+    setTimeout(() =>
+      this.categoryList?.nativeElement
+        .querySelector<HTMLElement>('[data-active="true"]')
+        ?.scrollIntoView({ block: 'nearest' }),
+    );
+  }
+
+  /** Which message element (if any) the category dropdown should point to for screen readers. */
+  categorySelectDescribedBy(): string | null {
+    if (this.categoriesError()) {
+      return 'category-select-error';
+    }
+    if (this.allCategoriesUsed()) {
+      return 'category-select-hint';
+    }
+    const control = this.form.controls.categoryId;
+    return control.touched && control.invalid ? 'category-select-error' : null;
+  }
+
   private errorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const message = error.error?.detail;
@@ -233,10 +421,10 @@ export class BudgetCategoryDialogComponent {
         return message;
       }
       if (error.status === 409) {
-        return 'A category with this name already exists in this budget.';
+        return 'This category is already in this budget.';
       }
       if (error.status === 404) {
-        return 'This budget no longer exists. Close this window and reload the page.';
+        return 'This budget or category no longer exists. Close this window and reload the page.';
       }
       if (error.status === 0) {
         return 'We could not reach the server. Check your connection and try again.';

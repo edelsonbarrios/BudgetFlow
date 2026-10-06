@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BudgetCategoryRepository extends JpaRepository<BudgetCategory, Long>, JpaSpecificationExecutor<BudgetCategory> {
-    boolean existsByNameIgnoreCase(String name);
-    boolean existsByBudgetIdAndNameIgnoreCase(Long budgetId, String name);
-    boolean existsByBudgetIdAndNameIgnoreCaseAndIdNot(Long budgetId, String name, Long budgetCategoryId);
-    List<BudgetCategory> findAllByBudgetId(Integer budgetId);
-
-    Integer budget(Budget budget);
+    boolean existsByBudgetIdAndCategoryId(Long budgetId, Long categoryId);
+    boolean existsByBudgetIdAndCategoryIdAndIdNot(Long budgetId, Long categoryId, Long budgetCategoryId);
+    List<BudgetCategory> findAllByBudgetId(Long budgetId);
 }

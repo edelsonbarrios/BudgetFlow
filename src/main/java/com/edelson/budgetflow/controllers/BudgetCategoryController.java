@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -32,7 +33,10 @@ public class BudgetCategoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<BudgetCategoryResponse> createBudgetCategory(@Valid @RequestBody CreateBudgetCategoryRequest request) {
-        return ResponseEntity.ok(budgetCategoryService.createBudgetCategory(request));
+        var created = budgetCategoryService.createBudgetCategory(request);
+        return ResponseEntity
+                .created(URI.create("/api/budget-categories/" + created.id())) // adjust to your real path
+                .body(created);
     }
 
     @PutMapping("/{id}")
@@ -45,7 +49,7 @@ public class BudgetCategoryController {
 
     @GetMapping("/budget/{budgetId}")
     public ResponseEntity<List<BudgetCategoryResponse>> getCategoriesByBudgetId(
-            @PathVariable Integer budgetId
+            @PathVariable Long budgetId
     ) {
         return ResponseEntity.ok(budgetCategoryService.getAllCategoriesByBudgetId(budgetId));
     }

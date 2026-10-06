@@ -17,9 +17,13 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private BudgetCategory category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recurring_expense_id")
+    private RecurringExpense recurringExpense;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
@@ -29,7 +33,4 @@ public class Expense {
 
     @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
-
-    @Column(name = "is_recurring", nullable = false)
-    private Boolean isRecurring = false;
 }

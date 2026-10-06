@@ -10,6 +10,8 @@ import org.mapstruct.*;
 public interface BudgetCategoryMapper {
 
     @Mapping(target = "budgetId", source = "budget.id")
+    @Mapping(target = "name", source = "category.name")
+    @Mapping(target = "categoryId", source = "category.id")
     BudgetCategoryResponse toResponse(BudgetCategory category);
 
     BudgetCategory toEntity(CreateBudgetCategoryRequest request);

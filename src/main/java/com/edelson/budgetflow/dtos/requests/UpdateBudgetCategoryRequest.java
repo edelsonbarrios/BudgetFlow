@@ -10,8 +10,8 @@ public record UpdateBudgetCategoryRequest(
         @Positive(message = "Invalid budget identifier value")
         Long budgetId,
         @NotNull(message = "Name is required")
-        @Size(message = "Name must not exceed 100 characters")
-        String name,
+        @Positive(message = "Invalid category identifier value")
+        Long categoryId,
         @NotNull(message = "Allocated amount is required")
         @PositiveOrZero(message = "Invalid amount")
         BigDecimal allocatedAmount

@@ -35,7 +35,7 @@ public class BudgetController {
         Pageable pageable = PageRequest.of(
                 page - 1,
                 size,
-                Sort.by(Sort.Order.asc("year"), Sort.Order.asc("month"), Sort.Order.desc("category.id"))
+                Sort.by(Sort.Order.asc("year"), Sort.Order.asc("month"))
         );
         return  budgetService.filterBudgetsByMonthAndYear(month, year, pageable);
     }
