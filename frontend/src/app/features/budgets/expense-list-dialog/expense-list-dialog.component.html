@@ -1,0 +1,77 @@
+<!-- Native <dialog>: focus stays inside and Escape closes it. -->
+<dialog #dialog class="dialog" aria-labelledby="expense-list-title" (close)="onClosed()">
+  <div class="panel">
+    <header class="panel__head">
+      <div class="panel__heading">
+        <h2 id="expense-list-title" class="panel__title">{{ title() }}</h2>
+        <p class="panel__hint num">
+          {{ monthText() }} · {{ allocated() | currency: currencyCode }} budgeted
+        </p>
+      </div>
+      <button type="button" class="btn btn--primary" (click)="requestAdd()">Add expense</button>
+    </header>
+
+    <div class="panel__body">
+      @if (loading()) {
+        <p class="sr-only" role="status">Loading expenses</p>
+        <div class="skeletons" aria-hidden="true">
+          @for (n of skeletonRows; track n) {
+            <div class="skeleton"></div>
+          }
+        </div>
+      } @else if (loadError()) {
+        <div class="notice notice--error" role="alert">
+          <span>{{ loadError() }}</span>
+          <button type="button" class="btn btn--ghost" (click)="load()">Try again</button>
+        </div>
+      } @else if (expenses().length === 0) {
+        <div class="empty">
+          <p class="empty__title">No expenses yet</p>
+          <p class="empty__text">Use "Add expense" to record the first one for this category.</p>
+        </div>
+      } @else {
+        <ul class="rows">
+          @for (e of expenses(); track e.id) {
+            <li class="row">
+              <p class="row__date num">{{ e.expenseDate | date: 'MMM d, y' }}</p>
+              <div class="row__main">
+                <p class="row__note" [class.row__note--empty]="!e.description">
+                  {{ e.description || 'No note' }}
+                </p>
+                @if (e.recurringExpenseId !== null) {
+                  <span class="tag">Recurring</span>
+                }
+              </div>
+              <p class="row__amount num">{{ e.amount | currency: currencyCode }}</p>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <footer class="panel__foot">
+      @if (totalPages() > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="page() <= 1 || loading()"
+            (click)="goToPage(page() - 1)"
+          >
+            Previous
+          </button>
+          <p class="pager__info num">Page {{ page() }} of {{ totalPages() }}</p>
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="page() >= totalPages() || loading()"
+            (click)="goToPage(page() + 1)"
+          >
+            Next
+          </button>
+        </nav>
+      }
+      <button type="button" class="btn btn--ghost panel__close" (click)="close()">Close</button>
+    </footer>
+  </div>
+</dialog>

@@ -89,14 +89,24 @@
                   <p class="row__share num">{{ incomeShare(c) }}% of income</p>
                 </div>
                 <p class="row__amount num">{{ c.allocatedAmount | currency: currencyCode }}</p>
-                <button
-                  type="button"
-                  class="btn btn--ghost"
-                  [attr.aria-label]="'Edit category ' + c.name"
-                  (click)="categoryDialog.open(b, c)"
-                >
-                  Edit
-                </button>
+                <div class="row__actions">
+                  <button
+                    type="button"
+                    class="btn btn--ghost action--expenses"
+                    [attr.aria-label]="'View expenses for ' + c.name"
+                    (click)="expenseList.open(b, c)"
+                  >
+                    Expenses
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--ghost action--edit"
+                    [attr.aria-label]="'Edit category ' + c.name"
+                    (click)="categoryDialog.open(b, c)"
+                  >
+                    Edit
+                  </button>
+                </div>
               </li>
             }
           </ul>
@@ -114,5 +124,16 @@
   </div>
 </section>
 
-<!-- The popup lives outside the states above, so it always exists. -->
+<!--
+  The popups live outside the states above, so they always exist.
+  The page connects them:
+   - the list asks to add an expense  -> the form opens with that category chosen
+   - the form saved an expense        -> the page shows a message, reloads the budget,
+                                         and the list reloads so the new expense shows at the top
+-->
 <app-budget-category-dialog #categoryDialog (saved)="onCategorySaved($event)" />
+<app-expense-list-dialog
+  #expenseList
+  (addRequested)="expenseDialog.open($event.budget, $event.category)"
+/>
+<app-expense-dialog #expenseDialog (saved)="onExpenseSaved($event); expenseList.reload()" />

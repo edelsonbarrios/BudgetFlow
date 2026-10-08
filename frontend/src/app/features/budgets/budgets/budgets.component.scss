@@ -148,7 +148,11 @@
   }
 }
 
-// View and Edit get their own tint so they read as different actions.
+// Add expense, View and Edit get their own tint so they read as different actions.
+.action--expense {
+  --wipe: var(--color-ok-bg);
+}
+
 .action--view {
   --wipe: var(--color-primary-soft);
 }
@@ -530,8 +534,11 @@
     box-shadow: var(--shadow-md);
   }
 
+  // The title and the three actions share a row. On a narrow screen the actions
+  // wrap under the title instead of spilling out of the card.
   &__head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
@@ -544,9 +551,10 @@
     letter-spacing: -0.01em;
   }
 
-  // View and Edit sit together on the right of the card header.
+  // Add expense, View and Edit sit together on the right of the card header.
   &__actions {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
   }

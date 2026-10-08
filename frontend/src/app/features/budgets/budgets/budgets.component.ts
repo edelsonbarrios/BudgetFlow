@@ -18,6 +18,8 @@ import {Subscription} from 'rxjs';
 import {Budget} from '../dtos/budget';
 import {BudgetService} from '../budget-service/budget.service';
 import {BudgetRequest} from '../dtos/budget-request';
+import {Expense} from '../dtos/expense';
+import {ExpenseDialogComponent} from '../expense-dialog/expense-dialog.component';
 
 const PAGE_SIZE = 12;
 
@@ -39,7 +41,7 @@ const MONTH_NAMES = [
 @Component({
   selector: 'app-budgets',
   standalone: true,
-  imports: [ReactiveFormsModule, CurrencyPipe, RouterLink],
+  imports: [ReactiveFormsModule, CurrencyPipe, RouterLink, ExpenseDialogComponent],
   templateUrl: './budgets.component.html',
   styleUrls: ['./budgets.component.scss'],
 })
@@ -94,6 +96,7 @@ export class BudgetsComponent implements OnInit {
   });
 
   @ViewChild('formDialog') private formDialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('expenseDialog') private expenseDialog?: ExpenseDialogComponent;
 
   ngOnInit(): void {
     this.load();
@@ -262,6 +265,24 @@ export class BudgetsComponent implements OnInit {
       }
     }
     return 'Something went wrong. Check the values and try again.';
+  }
+
+  // ===========================================================================
+  // Add expense
+  // ===========================================================================
+
+  /** Opens the expense popup for one budget. The button is disabled when it has no categories. */
+  openAddExpense(budget: Budget): void {
+    this.successMessage.set(null);
+    this.expenseDialog?.open(budget);
+  }
+
+  /**
+   * Runs when the expense popup saved an expense.
+   * The list does not show spending, so it does not need to reload.
+   */
+  onExpenseSaved(expense: Expense): void {
+    this.successMessage.set(`${expense.categoryName} expense saved, nice.`);
   }
 
   // ===========================================================================

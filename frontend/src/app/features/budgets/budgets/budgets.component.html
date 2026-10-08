@@ -155,6 +155,19 @@
               <header class="budget__head">
                 <h2 class="budget__title">{{ monthLabel(b) }}</h2>
                 <div class="budget__actions">
+                  <button
+                    type="button"
+                    class="btn btn--ghost action--expense"
+                    [attr.aria-label]="'Add expense to ' + monthLabel(b) + ' budget'"
+                    [attr.title]="b.categories.length === 0 ? 'Add a category first' : null"
+                    [disabled]="b.categories.length === 0"
+                    (click)="openAddExpense(b)"
+                  >
+                    <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Add expense
+                  </button>
                   <a
                     class="btn btn--ghost action--view"
                     [routerLink]="['/app/budgets', b.id]"
@@ -327,3 +340,6 @@
     </div>
   </form>
 </dialog>
+
+<!-- Add expense dialog. It lives outside the states above, so it always exists. -->
+<app-expense-dialog #expenseDialog (saved)="onExpenseSaved($event)" />

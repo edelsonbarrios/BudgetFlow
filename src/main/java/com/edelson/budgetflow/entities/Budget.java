@@ -61,7 +61,7 @@ public class Budget {
 
     @Transient
     public BigDecimal getLeftToSpend() {
-        return totalIncome.subtract(getTotalSpent());
+        return getGivenToCategories().subtract(getTotalSpent());
     }
 
     @Transient

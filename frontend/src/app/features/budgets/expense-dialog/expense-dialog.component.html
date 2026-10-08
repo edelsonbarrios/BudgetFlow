@@ -1,0 +1,119 @@
+<!-- Native <dialog>: focus stays inside and Escape closes it. -->
+<dialog #dialog class="dialog" aria-labelledby="expense-dialog-title" (close)="onClosed()">
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div>
+      <h2 id="expense-dialog-title" class="dialog__title">Add expense</h2>
+      @if (budget()) {
+        <p class="dialog__hint num">{{ title() }}</p>
+      }
+    </div>
+
+    <!-- Category -->
+    <div class="field">
+      <label class="field__label" for="expense-category">Category</label>
+      <select
+        id="expense-category"
+        class="field__control"
+        formControlName="budgetCategoryId"
+        [attr.aria-invalid]="
+          form.controls.budgetCategoryId.touched && form.controls.budgetCategoryId.invalid
+        "
+        [attr.aria-describedby]="
+          form.controls.budgetCategoryId.touched && form.controls.budgetCategoryId.invalid
+            ? 'expense-category-error'
+            : null
+        "
+      >
+        <option [ngValue]="null">Choose a category</option>
+        @for (c of categories(); track c.id) {
+          <option [ngValue]="c.id">{{ c.name }}</option>
+        }
+      </select>
+      @if (form.controls.budgetCategoryId.touched && form.controls.budgetCategoryId.invalid) {
+        <p id="expense-category-error" class="field__error">Choose a category.</p>
+      }
+    </div>
+
+    <div class="field-row">
+      <!-- Amount -->
+      <div class="field">
+        <label class="field__label" for="expense-amount">Amount</label>
+        <input
+          id="expense-amount"
+          class="field__control"
+          type="number"
+          inputmode="decimal"
+          step="0.01"
+          min="0.01"
+          formControlName="amount"
+          [attr.aria-invalid]="form.controls.amount.touched && form.controls.amount.invalid"
+          [attr.aria-describedby]="
+            form.controls.amount.touched && form.controls.amount.invalid
+              ? 'expense-amount-error'
+              : null
+          "
+        />
+        @if (form.controls.amount.touched && form.controls.amount.invalid) {
+          <p id="expense-amount-error" class="field__error">Enter an amount above 0.</p>
+        }
+      </div>
+
+      <!-- Date -->
+      <div class="field">
+        <label class="field__label" for="expense-date">Date</label>
+        <input
+          id="expense-date"
+          class="field__control"
+          type="date"
+          formControlName="expenseDate"
+          [attr.min]="minDate()"
+          [attr.max]="maxDate()"
+          [attr.aria-invalid]="form.controls.expenseDate.touched && form.controls.expenseDate.invalid"
+          [attr.aria-describedby]="
+            form.controls.expenseDate.touched && form.controls.expenseDate.invalid
+              ? 'expense-date-error'
+              : null
+          "
+        />
+        @if (form.controls.expenseDate.touched && form.controls.expenseDate.invalid) {
+          <p id="expense-date-error" class="field__error">Choose a date in {{ title() }}.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Note -->
+    <div class="field">
+      <label class="field__label" for="expense-description">Note (optional)</label>
+      <input
+        id="expense-description"
+        class="field__control"
+        type="text"
+        maxlength="255"
+        placeholder="For example, Jollibee"
+        formControlName="description"
+        [attr.aria-invalid]="form.controls.description.touched && form.controls.description.invalid"
+        [attr.aria-describedby]="
+          form.controls.description.touched && form.controls.description.invalid
+            ? 'expense-description-error'
+            : null
+        "
+      />
+      @if (form.controls.description.touched && form.controls.description.invalid) {
+        <p id="expense-description-error" class="field__error">
+          Keep the note under 255 characters.
+        </p>
+      }
+    </div>
+
+    @if (formError()) {
+      <p class="field__error" role="alert">{{ formError() }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save expense' }}
+      </button>
+    </div>
+  </form>
+</dialog>

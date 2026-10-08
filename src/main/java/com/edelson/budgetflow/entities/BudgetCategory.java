@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,7 +31,7 @@ public class BudgetCategory {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id DESC")
-    private List<Expense> expenses;
+    private List<Expense> expenses = new ArrayList<Expense>();
 
     @Transient
     public BigDecimal getSpentAmount() {

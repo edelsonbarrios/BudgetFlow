@@ -1,0 +1,348 @@
+// =============================================================================
+// ExpenseListDialogComponent
+// A popup that lists the expenses of one category, a page at a time.
+// The dialog box and the rows follow the same look as the other popups and rows.
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+//
+// The flex layout lives on .panel, a div inside the dialog, and NOT on the dialog itself.
+// Setting display on the <dialog> would override the browser's "closed = hidden" rule
+// and the popup would always be visible.
+//
+// Motion rules for this file (same as the pages):
+//  - Entrance animations use fill-mode "backwards", never "both" or "forwards".
+//  - Anything that moves lives inside prefers-reduced-motion: no-preference.
+// Rows slide in from the left one after another. The delay is fixed per position
+// (SCSS loop). A page has at most 10 rows.
+// =============================================================================
+
+:host {
+  // Move --ease-out to _tokens.scss when you reuse it on other pages, then
+  // delete it here. --ease-spring already lives in _tokens.scss.
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+// Visible only to screen readers.
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dialog {
+  width: min(560px, calc(100% - var(--space-6)));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+
+  &::backdrop {
+    background: rgba(28, 43, 42, 0.4);
+  }
+}
+
+// ---- Layout: header, a scrolling body, and a footer -----------------------------------------
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(80vh, 640px);
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  &__heading {
+    min-width: 0;
+  }
+
+  &__title {
+    overflow: hidden;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__hint {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  // Only this part scrolls, so the header and footer stay in view.
+  &__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  &__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-border);
+  }
+
+  // Close stays on the right, with or without the pager next to it.
+  &__close {
+    margin-left: auto;
+  }
+}
+
+// ---- Expense rows ---------------------------------------------------------------------------------
+.rows {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &:hover {
+    border-color: var(--color-primary-soft);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &__date {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  &__main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  &__note {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: var(--font-weight-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--empty {
+      color: var(--color-text-soft);
+      font-weight: var(--font-weight-regular);
+    }
+  }
+
+  &__amount {
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+  }
+}
+
+// Small label, like "Recurring". Same look as a chip on the Budgets page.
+.tag {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+// ---- Notices ----------------------------------------------------------------------------------------
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+
+  &--error {
+    background: var(--color-exceeded-bg);
+    color: var(--color-exceeded);
+  }
+}
+
+// ---- Loading skeletons ----------------------------------------------------------------------------
+.skeletons {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skeleton {
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--color-border);
+  opacity: 0.6;
+}
+
+// ---- Empty state -----------------------------------------------------------------------------------
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+
+  &__title {
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__text {
+    max-width: 40ch;
+    color: var(--color-text-muted);
+  }
+}
+
+// ---- Pagination -------------------------------------------------------------------------------------
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  &__info {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+}
+
+// ---- Small screens ---------------------------------------------------------------------------------
+@media (max-width: 480px) {
+  .panel {
+    &__head,
+    &__foot {
+      padding-left: var(--space-4);
+      padding-right: var(--space-4);
+    }
+
+    &__body {
+      padding-left: var(--space-4);
+      padding-right: var(--space-4);
+    }
+  }
+
+  // The date moves above the note and the amount.
+  .row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .row__date {
+    grid-column: 1 / -1;
+  }
+}
+
+// ---- Keyframes ----------------------------------------------------------------------------------------
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Motion (only for people who have not asked for reduced motion) --------------------------------
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialog-in 0.3s var(--ease-out) backwards;
+  }
+
+  // Each row slides in from the left a moment after the previous one.
+  .rows > .row {
+    animation: row-in 0.4s var(--ease-out) backwards;
+    animation-delay: 0.45s;
+  }
+
+  @for $n from 1 through 10 {
+    .rows > .row:nth-child(#{$n}) {
+      animation-delay: 0.1s + ($n - 1) * 0.04s;
+    }
+  }
+
+  .notice {
+    animation: notice-in 0.35s var(--ease-spring) backwards;
+  }
+
+  .empty {
+    animation: fade-up 0.5s var(--ease-out) backwards;
+  }
+
+  // Loading skeleton: a soft light sweeping across, not a spinner.
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-border) 0%,
+      var(--color-surface) 50%,
+      var(--color-border) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}

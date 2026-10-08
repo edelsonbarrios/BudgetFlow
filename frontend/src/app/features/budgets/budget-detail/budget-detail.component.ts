@@ -6,8 +6,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { Budget } from '../dtos/budget';
 import { BudgetCategory } from '../dtos/budget-category';
+import { Expense } from '../dtos/expense';
 import { BudgetService } from '../budget-service/budget.service';
 import { BudgetCategoryDialogComponent } from '../budget-category-dialog/budget-category-dialog.component';
+import { ExpenseDialogComponent } from '../expense-dialog/expense-dialog.component';
+import { ExpenseListDialogComponent } from '../expense-list-dialog/expense-list-dialog.component';
 import {
   CURRENCY_CODE,
   allocatedPercent,
@@ -15,8 +18,10 @@ import {
 } from '../budget-helpers/budget-helpers';
 
 /**
- * One whole budget: income, totals, and every category with an Edit button.
+ * One whole budget: income, totals, and every category with its buttons.
  * Adding and editing a category happens in BudgetCategoryDialogComponent.
+ * Viewing a category's expenses happens in ExpenseListDialogComponent, and adding one
+ * happens in ExpenseDialogComponent. This page connects the popups (see the template).
  *
  * The budget id comes from the address (/app/budgets/:id).
  * The page owns its own width. It sits inside the app shell, and the route
@@ -25,7 +30,13 @@ import {
 @Component({
   selector: 'app-budget-detail',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink, BudgetCategoryDialogComponent],
+  imports: [
+    CurrencyPipe,
+    RouterLink,
+    BudgetCategoryDialogComponent,
+    ExpenseDialogComponent,
+    ExpenseListDialogComponent,
+  ],
   templateUrl: './budget-detail.component.html',
   styleUrls: ['./budget-detail.component.scss'],
 })
@@ -116,9 +127,18 @@ export class BudgetDetailComponent implements OnInit {
       });
   }
 
-  /** Runs when the dialog saved a category. */
+  /** Runs when the category dialog saved a category. */
   onCategorySaved(category: BudgetCategory): void {
     this.successMessage.set(`${category.name} saved, nice.`);
+    this.load(false);
+  }
+
+  /**
+   * Runs when the expense dialog saved an expense.
+   * The template also reloads the expense list that is open behind it.
+   */
+  onExpenseSaved(expense: Expense): void {
+    this.successMessage.set(`${expense.categoryName} expense saved, nice.`);
     this.load(false);
   }
 

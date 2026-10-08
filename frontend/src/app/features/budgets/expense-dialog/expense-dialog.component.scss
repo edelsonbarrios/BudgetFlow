@@ -1,0 +1,143 @@
+// =============================================================================
+// ExpenseDialogComponent
+// A small popup form. The dialog and field styles are the same as in
+// BudgetCategoryDialogComponent and BudgetsComponent. When a fourth component needs
+// them, move them into a global file in src/app/styles.
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+//
+// Motion rules for this file (same as the pages):
+//  - Entrance animations use fill-mode "backwards", never "both" or "forwards".
+//  - Anything that moves lives inside prefers-reduced-motion: no-preference.
+// =============================================================================
+
+:host {
+  // Move --ease-out to _tokens.scss when you reuse it on other pages, then
+  // delete it here.
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dialog {
+  width: min(440px, calc(100% - var(--space-6)));
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+
+  &::backdrop {
+    background: rgba(28, 43, 42, 0.4);
+  }
+
+  &__form {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  // Small line under the title: which month this expense goes in.
+  &__hint {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__control {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-text-soft);
+    }
+
+    // The soft ring is the visible focus signal. The border turns dark so the
+    // focus state still has strong contrast, and the transparent outline keeps
+    // it visible in high-contrast mode.
+    &:focus-visible {
+      outline: 2px solid transparent;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-exceeded);
+    }
+  }
+
+  &__error {
+    color: var(--color-exceeded);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+// Amount and date sit side by side.
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialog-in 0.3s var(--ease-out) backwards;
+  }
+
+  .field__error {
+    animation: fade-in 0.25s ease backwards;
+  }
+}
