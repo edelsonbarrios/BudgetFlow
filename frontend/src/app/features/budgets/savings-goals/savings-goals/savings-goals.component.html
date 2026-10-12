@@ -1,0 +1,240 @@
+<section class="page">
+  <div class="container">
+    <header class="page__head">
+      <div>
+        <h1 class="page__title">Savings goals</h1>
+        <p class="page__text">
+          Set a target, add money when you save, and watch it grow.
+        </p>
+      </div>
+      <button type="button" class="btn btn--primary" (click)="openCreate()">
+        <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        New goal
+      </button>
+    </header>
+
+    <!-- Filters -->
+    <div class="filters" role="group" aria-label="Filter savings goals">
+      <div class="filters__group">
+        <label class="filters__label" for="goal-search">Search</label>
+        <div class="search">
+          <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-4-4" />
+          </svg>
+          <input
+            #searchField
+            id="goal-search"
+            class="search__input"
+            type="search"
+            maxlength="100"
+            placeholder="Goal name"
+            [value]="searchInput()"
+            (input)="onSearchInput(searchField.value)"
+          />
+        </div>
+      </div>
+
+      <div class="filters__group filters__group--grow">
+        <span class="filters__label" id="goal-status-label">Status</span>
+        <div class="pills" role="group" aria-labelledby="goal-status-label">
+          @for (option of statusOptions; track option.label; let k = $index) {
+            <button
+              type="button"
+              class="pill"
+              [class.pill--on]="statusFilter() === option.value"
+              [attr.aria-pressed]="statusFilter() === option.value"
+              [style.--k]="k"
+              (click)="onStatusFilter(option.value)"
+            >
+              <svg class="pill__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M5 12.5l4.5 4.5L19 7" />
+              </svg>
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (hasFilters()) {
+        <button type="button" class="btn btn--ghost filters__clear" (click)="clearFilters()">
+          <svg class="btn__icon btn__icon--close" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+          Clear filters
+        </button>
+      }
+    </div>
+
+    <!-- Success message (announced politely to screen readers) -->
+    <div aria-live="polite">
+      @if (successMessage()) {
+        <p class="notice notice--success">{{ successMessage() }}</p>
+      }
+    </div>
+
+    <!-- List area: loading, error, empty, or the goals -->
+    @if (loading()) {
+      <p class="sr-only" role="status">Loading savings goals</p>
+      <div class="skeletons" aria-hidden="true">
+        @for (n of skeletonRows; track n) {
+          <div class="skeleton"></div>
+        }
+      </div>
+    } @else if (loadError()) {
+      <div class="notice notice--error" role="alert">
+        <span>{{ loadError() }}</span>
+        <button type="button" class="btn btn--ghost" (click)="load()">Try again</button>
+      </div>
+    } @else if (goals().length === 0) {
+      <div class="empty">
+        <svg class="empty__art" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+          <circle class="empty__glow" cx="60" cy="52" r="40" />
+          <rect class="empty__wallet" x="32" y="38" width="56" height="36" rx="10" />
+          <path class="empty__line" d="M32 51h56" />
+          <circle class="empty__coin" cx="77" cy="62" r="5" />
+        </svg>
+        @if (hasFilters()) {
+          <h2 class="empty__title">No goals match these filters</h2>
+          <p class="empty__text">Try a different name or status, or clear the filters.</p>
+          <button type="button" class="btn btn--ghost" (click)="clearFilters()">
+            <svg class="btn__icon btn__icon--close" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+            Clear filters
+          </button>
+        } @else {
+          <h2 class="empty__title">No savings goals yet</h2>
+          <p class="empty__text">Create your first goal and start saving toward it.</p>
+          <button type="button" class="btn btn--primary" (click)="openCreate()">
+            <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            New goal
+          </button>
+        }
+      </div>
+    } @else {
+      <ul class="list" [class.list--quick]="quickReplay()">
+        @for (g of goals(); track g.id) {
+          <li>
+            <article
+              class="goal"
+              [attr.data-state]="cardState(g)"
+              [attr.aria-label]="g.name + ' savings goal'"
+            >
+              <header class="goal__head">
+                <h2 class="goal__title" [attr.title]="g.name">{{ g.name }}</h2>
+                @if (cardState(g) !== 'none') {
+                  <span class="status">{{ stateText(g) }}</span>
+                }
+              </header>
+
+              <div class="goal__top">
+                <p class="goal__amounts num">
+                  <span class="goal__saved">{{ g.currentAmount | currency: currencyCode }}</span>
+                  <span class="goal__of"> / {{ g.targetAmount | currency: currencyCode }}</span>
+                </p>
+                <p class="goal__percent num">{{ g.percentAmount }}%</p>
+              </div>
+
+              <div
+                class="bar"
+                role="progressbar"
+                [attr.aria-label]="g.name + ' progress'"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="barWidth(g.percentAmount)"
+                [attr.aria-valuetext]="g.percentAmount + ' percent saved'"
+              >
+                <div class="bar__fill" [style.width.%]="barWidth(g.percentAmount)"></div>
+              </div>
+
+              <div class="goal__foot">
+                <span class="num">
+                  @if (g.completed) {
+                    Fully saved
+                  } @else {
+                    {{ g.remainingAmount | currency: currencyCode }} to go
+                  }
+                </span>
+                <span class="num">
+                  @if (g.targetDate) {
+                    By {{ g.targetDate | date: 'MMM d, y' }}
+                  } @else {
+                    No target date
+                  }
+                </span>
+              </div>
+
+              <!-- Card actions. Skeletons for now: the popups and endpoints come later. -->
+              <div class="goal__actions">
+                <button
+                  type="button"
+                  class="btn btn--ghost"
+                  [attr.aria-label]="'Update ' + g.name"
+                  (click)="onUpdate(g)"
+                >
+                  <svg class="btn__icon btn__icon--edit" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 20h4L19 9l-4-4L4 16v4z" />
+                    <path d="M13.5 6.5l4 4" />
+                  </svg>
+                  Update
+                </button>
+
+                <!-- An archived goal is put away, so it does not take new savings. -->
+                @if (g.status !== 'ARCHIVED') {
+                  <button
+                    type="button"
+                    class="btn btn--primary"
+                    [attr.aria-label]="'Add savings to ' + g.name"
+                    (click)="onAddSavings(g)"
+                  >
+                    <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Add savings
+                  </button>
+                }
+              </div>
+            </article>
+          </li>
+        }
+      </ul>
+
+      @if (totalPages() > 1) {
+        <nav class="pager" aria-label="Pagination">
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="page() <= 1"
+            (click)="goToPage(page() - 1)"
+          >
+            <svg class="btn__icon btn__icon--prev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M19 12H5M11 6l-6 6 6 6" />
+            </svg>
+            Previous
+          </button>
+          <p class="pager__info num">Page {{ page() }} of {{ totalPages() }}</p>
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="page() >= totalPages()"
+            (click)="goToPage(page() + 1)"
+          >
+            Next
+            <svg class="btn__icon btn__icon--next" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        </nav>
+      }
+    }
+  </div>
+</section>
+
+<!-- The popup lives outside the states above, so it always exists. -->
+<app-savings-goal-dialog #goalDialog (saved)="onGoalSaved($event)" />
+<app-add-savings-dialog #addSavingsDialog (saved)="onSavingsAdded($event)"/>

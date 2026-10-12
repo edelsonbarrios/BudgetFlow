@@ -1,0 +1,69 @@
+<!-- Native <dialog>: focus stays inside and Escape closes it. -->
+<dialog #dialog class="dialog" aria-labelledby="savings-dialog-title" (close)="onClosed()">
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (goal(); as g) {
+      <div>
+        <h2 id="savings-dialog-title" class="dialog__title">Add savings</h2>
+        <p class="dialog__hint">Add money you saved toward {{ g.name }}.</p>
+      </div>
+
+      <!-- Where the goal stands right now. Every number comes from the backend. -->
+      <div class="summary">
+        <p class="summary__row">
+          <span class="summary__label">Saved so far</span>
+          <span class="summary__value num">
+            {{ g.currentAmount | currency: currencyCode }}
+            <span class="summary__of">of {{ g.targetAmount | currency: currencyCode }}</span>
+          </span>
+        </p>
+        <p class="summary__row">
+          <span class="summary__label">Still to go</span>
+          <span class="summary__value num">
+            @if (g.completed) {
+              Nothing, goal reached
+            } @else {
+              {{ g.remainingAmount | currency: currencyCode }}
+            }
+          </span>
+        </p>
+      </div>
+
+      <!-- Amount -->
+      <div class="field">
+        <label class="field__label" for="savings-amount">Amount to add</label>
+        <input
+          id="savings-amount"
+          class="field__control"
+          type="number"
+          inputmode="decimal"
+          step="0.01"
+          min="0.01"
+          placeholder="For example, 2000"
+          formControlName="amount"
+          [attr.aria-invalid]="form.controls.amount.touched && form.controls.amount.invalid"
+          [attr.aria-describedby]="
+            form.controls.amount.touched && form.controls.amount.invalid
+              ? 'savings-amount-error'
+              : null
+          "
+        />
+        @if (form.controls.amount.touched && form.controls.amount.invalid) {
+          <p id="savings-amount-error" class="field__error">
+            Enter an amount above 0, with up to 2 decimal places.
+          </p>
+        }
+      </div>
+    }
+
+    @if (formError()) {
+      <p class="field__error" role="alert">{{ formError() }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Add savings' }}
+      </button>
+    </div>
+  </form>
+</dialog>

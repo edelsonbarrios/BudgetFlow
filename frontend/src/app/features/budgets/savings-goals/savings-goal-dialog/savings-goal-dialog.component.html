@@ -1,0 +1,90 @@
+<!-- Native <dialog>: focus stays inside and Escape closes it. -->
+<dialog #dialog class="dialog" aria-labelledby="goal-dialog-title" (close)="onClosed()">
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div>
+      <h2 id="goal-dialog-title" class="dialog__title">New goal</h2>
+      <p class="dialog__hint">Set a target, then add money to it whenever you save.</p>
+    </div>
+
+    <!-- Name -->
+    <div class="field">
+      <label class="field__label" for="goal-name">Name</label>
+      <input
+        id="goal-name"
+        class="field__control"
+        type="text"
+        maxlength="100"
+        placeholder="For example, New laptop"
+        formControlName="name"
+        [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid"
+        [attr.aria-describedby]="
+          form.controls.name.touched && form.controls.name.invalid ? 'goal-name-error' : null
+        "
+      />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <p id="goal-name-error" class="field__error">Enter a name up to 100 characters.</p>
+      }
+    </div>
+
+    <div class="field-row">
+      <!-- Target amount -->
+      <div class="field">
+        <label class="field__label" for="goal-amount">Target amount</label>
+        <input
+          id="goal-amount"
+          class="field__control"
+          type="number"
+          inputmode="decimal"
+          step="0.01"
+          min="0.01"
+          formControlName="targetAmount"
+          [attr.aria-invalid]="
+            form.controls.targetAmount.touched && form.controls.targetAmount.invalid
+          "
+          [attr.aria-describedby]="
+            form.controls.targetAmount.touched && form.controls.targetAmount.invalid
+              ? 'goal-amount-error'
+              : null
+          "
+        />
+        @if (form.controls.targetAmount.touched && form.controls.targetAmount.invalid) {
+          <p id="goal-amount-error" class="field__error">Enter an amount above 0.</p>
+        }
+      </div>
+
+      <!-- Target date (optional) -->
+      <div class="field">
+        <label class="field__label" for="goal-date">Target date (optional)</label>
+        <input
+          id="goal-date"
+          class="field__control"
+          type="date"
+          formControlName="targetDate"
+          [attr.min]="minDate()"
+          [attr.aria-invalid]="
+            form.controls.targetDate.touched && form.controls.targetDate.invalid
+          "
+          [attr.aria-describedby]="
+            form.controls.targetDate.touched && form.controls.targetDate.invalid
+              ? 'goal-date-error'
+              : null
+          "
+        />
+        @if (form.controls.targetDate.touched && form.controls.targetDate.invalid) {
+          <p id="goal-date-error" class="field__error">Choose today or a later date.</p>
+        }
+      </div>
+    </div>
+
+    @if (formError()) {
+      <p class="field__error" role="alert">{{ formError() }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save goal' }}
+      </button>
+    </div>
+  </form>
+</dialog>

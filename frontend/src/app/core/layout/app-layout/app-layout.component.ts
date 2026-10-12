@@ -24,6 +24,7 @@ export class AppLayoutComponent implements AfterViewInit, OnDestroy {
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', path: '/app/dashboard' },
     { label: 'Budgets', path: '/app/budgets' },
+    { label: 'Savings', path: '/app/savings'}
   ];
 
   /** True once the page has been scrolled a little; the header uses it to "lift" off the page. */
