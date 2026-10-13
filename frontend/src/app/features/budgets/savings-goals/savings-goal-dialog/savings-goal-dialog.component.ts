@@ -21,6 +21,8 @@ import {
 import { CreateSavingsGoalRequest } from '../dtos/create-savings-goal-request';
 import { SavingsGoal } from '../dtos/savings-goal';
 import { SavingsGoalService } from '../savings-goal-service/savings-goal.service';
+import {applyServerFieldErrors} from '../../../../shared/utilities/apply-server-error';
+import {JsonPipe} from '@angular/common';
 
 /** 5 becomes "05", so dates always look like 2026-10-05. */
 const pad = (n: number): string => String(n).padStart(2, '0');
@@ -39,7 +41,7 @@ const pad = (n: number): string => String(n).padStart(2, '0');
 @Component({
   selector: 'app-savings-goal-dialog',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, JsonPipe],
   templateUrl: './savings-goal-dialog.component.html',
   styleUrls: ['./savings-goal-dialog.component.scss'],
 })
@@ -145,9 +147,24 @@ export class SavingsGoalDialogComponent {
         },
         error: (error: unknown) => {
           this.saving.set(false);
-          this.formError.set(this.errorMessage(error));
+          this.showError(error);
         },
       });
+  }
+
+  /**
+   * Field errors from the server go under their own fields (the red outline and the message).
+   * Anything else (a rule like "date in the past", a lost connection) goes in the message
+   * at the bottom of the form.
+   */
+  private showError(error: unknown): void {
+    const leftover = applyServerFieldErrors(this.form, error);
+
+    if (leftover === null) {
+      this.formError.set(this.errorMessage(error));
+      return;
+    }
+    this.formError.set(leftover.length > 0 ? leftover.join(' ') : null);
   }
 
   private errorMessage(error: unknown): string {

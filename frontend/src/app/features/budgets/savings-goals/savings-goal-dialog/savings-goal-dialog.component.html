@@ -22,7 +22,9 @@
         "
       />
       @if (form.controls.name.touched && form.controls.name.invalid) {
-        <p id="goal-name-error" class="field__error">Enter a name up to 100 characters.</p>
+        <p id="goal-name-error" class="field__error">
+          {{ form.controls.name.errors?.['server'] ?? 'Enter a name up to 100 characters.' }}
+        </p>
       }
     </div>
 
@@ -48,13 +50,15 @@
           "
         />
         @if (form.controls.targetAmount.touched && form.controls.targetAmount.invalid) {
-          <p id="goal-amount-error" class="field__error">Enter an amount above 0.</p>
+          <p id="goal-amount-error" class="field__error">
+            {{ form.controls.targetAmount.errors?.['server'] ?? 'Enter an amount above 0.' }}
+          </p>
         }
       </div>
 
       <!-- Target date (optional) -->
       <div class="field">
-        <label class="field__label" for="goal-date">Target date (optional)</label>
+        <label class="field__label" for="goal-date">Target date</label>
         <input
           id="goal-date"
           class="field__control"
@@ -71,7 +75,9 @@
           "
         />
         @if (form.controls.targetDate.touched && form.controls.targetDate.invalid) {
-          <p id="goal-date-error" class="field__error">Choose today or a later date.</p>
+          <p id="goal-date-error" class="field__error">
+            {{ form.controls.targetDate.errors?.['server'] ?? 'Choose today or a later date.' }}
+          </p>
         }
       </div>
     </div>

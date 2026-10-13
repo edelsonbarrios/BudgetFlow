@@ -18,7 +18,6 @@ public record CreateSavingsGoalRequest(
     @Digits(integer = 10, fraction = 2)
     BigDecimal currentAmount,
 
-    @NotNull(message = "Target date is required")
     @FutureOrPresent(message = "Target date must be today or in the future")
     LocalDate targetDate
 ) { }

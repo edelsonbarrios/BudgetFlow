@@ -6,11 +6,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @RestControllerAdvice
@@ -60,14 +65,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request
     ) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST, "Validation failed"
-        );
-        problem.setTitle("Invalid request");
-        problem.setProperty("errors", ex.getBindingResult().getFieldErrors().stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .toList());
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
 
-        return handleExceptionInternal(ex, problem, headers, status, request);
+        for(FieldError error : ex.getBindingResult().getFieldErrors()) {
+            fieldErrors.putIfAbsent(
+                    error.getField(),
+                    Objects.requireNonNullElse(error.getDefaultMessage(), "Invalid value.")
+            );
+        }
+
+        String detail = fieldErrors.isEmpty()
+                ? "Validation failed"
+                : String.join(". ", fieldErrors.values() + ".");
+
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, detail
+        );
+        problemDetail.setTitle("Invalid request");
+        problemDetail.setProperty("fieldErrors", fieldErrors);
+
+        return handleExceptionInternal(ex, problemDetail, headers, status, request);
     }
 }
