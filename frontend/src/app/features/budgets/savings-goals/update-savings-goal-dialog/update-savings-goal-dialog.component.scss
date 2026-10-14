@@ -1,0 +1,225 @@
+// =============================================================================
+// UpdateSavingsGoalDialogComponent
+// A small popup form. The dialog and field styles are the same as in the other
+// dialogs (SavingsGoalDialogComponent, AddSavingsDialogComponent,
+// BudgetCategoryDialogComponent, ExpenseDialogComponent). When another
+// component needs them, move them into a global file in src/app/styles.
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+//
+// Motion rules for this file (same as the pages):
+//  - Entrance animations use fill-mode "backwards", never "both" or "forwards".
+//  - Anything that moves lives inside prefers-reduced-motion: no-preference.
+// =============================================================================
+
+:host {
+  // Move --ease-out to _tokens.scss when you reuse it on other pages, then
+  // delete it here.
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dialog {
+  width: min(440px, calc(100% - var(--space-6)));
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+
+  &::backdrop {
+    background: rgba(28, 43, 42, 0.4);
+  }
+
+  &__form {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  // Small line under the title.
+  &__hint {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+}
+
+// Target amount and target date sit side by side.
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  // On a narrow screen the two fields stack.
+  @media (max-width: 480px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__control {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-text-soft);
+    }
+
+    // The soft ring is the visible focus signal. The border turns dark so the
+    // focus state still has strong contrast, and the transparent outline keeps
+    // it visible in high-contrast mode.
+    &:focus-visible {
+      outline: 2px solid transparent;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-exceeded);
+    }
+  }
+
+  &__error {
+    color: var(--color-exceeded);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+// A <fieldset> has its own border and padding. This removes them so it looks like
+// any other field.
+.field--group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+// The status pills. They wrap to a new line when there is not enough room.
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  position: relative;
+
+  // The real radio button is hidden but still works with keyboard and screen readers.
+  &__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  &__text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-text-soft);
+    }
+  }
+
+  // The check mark is hidden until the pill is chosen, so color is never the only clue.
+  &__check {
+    display: none;
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &__input:checked + &__text {
+    border-color: var(--color-primary);
+    background: var(--color-primary-soft);
+    color: var(--color-text);
+  }
+
+  &__input:checked + &__text &__check {
+    display: inline;
+  }
+
+  // Same focus ring as the text fields.
+  &__input:focus-visible + &__text {
+    outline: 2px solid transparent;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialog-in 0.3s var(--ease-out) backwards;
+  }
+
+  .field__error {
+    animation: fade-in 0.25s ease backwards;
+  }
+}

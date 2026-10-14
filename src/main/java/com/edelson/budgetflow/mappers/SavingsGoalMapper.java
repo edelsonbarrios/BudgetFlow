@@ -1,10 +1,12 @@
 package com.edelson.budgetflow.mappers;
 
 import com.edelson.budgetflow.dtos.requests.CreateSavingsGoalRequest;
+import com.edelson.budgetflow.dtos.requests.UpdateSavingsGoalRequest;
 import com.edelson.budgetflow.dtos.responses.SavingsGoalResponse;
 import com.edelson.budgetflow.entities.SavingsGoal;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(
@@ -17,4 +19,10 @@ public interface SavingsGoalMapper {
     SavingsGoal toEntity(CreateSavingsGoalRequest savingsGoal);
 
     SavingsGoalResponse toResponse(SavingsGoal savingsGoal);
+
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target ="currentAmount", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    void updateSavingsGoal(UpdateSavingsGoalRequest request, @MappingTarget SavingsGoal goal);
 }

@@ -4,6 +4,7 @@ import com.edelson.budgetflow.common.web.PageResponse;
 import com.edelson.budgetflow.dtos.filters.SavingsGoalFilters;
 import com.edelson.budgetflow.dtos.requests.AddSavingsRequest;
 import com.edelson.budgetflow.dtos.requests.CreateSavingsGoalRequest;
+import com.edelson.budgetflow.dtos.requests.UpdateSavingsGoalRequest;
 import com.edelson.budgetflow.dtos.responses.SavingsGoalResponse;
 import com.edelson.budgetflow.services.SavingsGoalService;
 import jakarta.validation.Valid;
@@ -38,5 +39,18 @@ public class SavingsGoalController {
     public ResponseEntity<SavingsGoalResponse> addSavings(
            @Valid @RequestBody AddSavingsRequest request) {
         return ResponseEntity.ok(savingsGoalService.addSavings(request));
+    }
+
+    @PutMapping
+    public ResponseEntity<SavingsGoalResponse> updateSavingsGoal(
+           @Valid @RequestBody UpdateSavingsGoalRequest request) {
+        return ResponseEntity.ok(savingsGoalService.updateSavingsGoal(request));
+    }
+
+    @GetMapping("/{name}")
+    public ResponseEntity<SavingsGoalResponse> getGoalByName(
+            @PathVariable String name
+    ) {
+        return ResponseEntity.ok(savingsGoalService.getSavingsGoalByName(name));
     }
 }

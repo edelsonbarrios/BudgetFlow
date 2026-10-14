@@ -8,6 +8,7 @@ import { SavingsGoalService } from '../savings-goal-service/savings-goal.service
 import { SavingsGoalDialogComponent } from '../savings-goal-dialog/savings-goal-dialog.component';
 import {CURRENCY_CODE} from '../../budget-helpers/budget-helpers';
 import {AddSavingsDialogComponent} from '../add-savings-dialog/add-savings-dialog.component';
+import {UpdateSavingsGoalDialogComponent} from '../update-savings-goal-dialog/update-savings-goal-dialog.component';
 
 /** The backend allows at most 10 per page. */
 const PAGE_SIZE = 6;
@@ -28,7 +29,7 @@ type CardState = 'archived' | 'completed' | 'overdue' | 'none';
 @Component({
   selector: 'app-savings-goals',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, SavingsGoalDialogComponent, AddSavingsDialogComponent],
+  imports: [CurrencyPipe, DatePipe, SavingsGoalDialogComponent, AddSavingsDialogComponent, UpdateSavingsGoalDialogComponent],
   templateUrl: './savings-goals.component.html',
   styleUrls: ['./savings-goals.component.scss'],
 })
@@ -44,6 +45,9 @@ export class SavingsGoalsComponent implements OnInit {
     { value: null, label: 'All' },
     { value: 'ACTIVE', label: 'Active' },
     { value: 'ARCHIVED', label: 'Archived' },
+    {value : 'PAUSED', label: 'Paused'},
+    {value : 'CANCELLED', label: 'Cancelled'},
+    {value : 'COMPLETED', label: 'Completed'}
   ];
 
   // ---- List state ----
@@ -79,6 +83,7 @@ export class SavingsGoalsComponent implements OnInit {
 
   @ViewChild('goalDialog') private goalDialog?: SavingsGoalDialogComponent;
   @ViewChild('addSavingsDialog') private addSavingsDialog ?: AddSavingsDialogComponent;
+  @ViewChild('updateSavingsDialog') private updateSavingsDialog ?: UpdateSavingsGoalDialogComponent;
 
   constructor() {
     this.destroyRef.onDestroy(() => clearTimeout(this.searchTimer));
@@ -232,7 +237,7 @@ export class SavingsGoalsComponent implements OnInit {
   }
 
   onUpdate(goal : SavingsGoal) {
-
+    this.updateSavingsDialog?.open(goal);
   }
 
   onAddSavings(goal : SavingsGoal) {
@@ -241,6 +246,11 @@ export class SavingsGoalsComponent implements OnInit {
 
   onSavingsAdded(goal : SavingsGoal) {
     this.successMessage.set(`Savings added to ${goal.name}, keep it up.`)
+    this.load();
+  }
+
+  onUpdatedSavings(goal : SavingsGoal) {
+    this.successMessage.set(`${goal.name} update successfully`);
     this.load();
   }
 }

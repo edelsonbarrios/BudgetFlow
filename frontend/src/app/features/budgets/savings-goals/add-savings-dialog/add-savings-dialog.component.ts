@@ -6,12 +6,15 @@ import {
   Output,
   ViewChild,
   inject,
-  signal,
+  signal, DestroyRef,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { SavingsGoal } from '../dtos/savings-goal';
 import { CURRENCY_CODE } from '../../budget-helpers/budget-helpers';
+import {SavingsGoalService} from '../savings-goal-service/savings-goal.service';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {HttpErrorResponse} from '@angular/common/http';
 
 /**
  * The popup for adding money to a savings goal. The amount is ADDED to what is
@@ -34,6 +37,8 @@ import { CURRENCY_CODE } from '../../budget-helpers/budget-helpers';
 })
 export class AddSavingsDialogComponent {
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly savingsGoalService = inject(SavingsGoalService)
+  private readonly destroyRef = inject(DestroyRef)
 
   readonly currencyCode = CURRENCY_CODE;
 
@@ -93,29 +98,35 @@ export class AddSavingsDialogComponent {
       return;
     }
 
-    // TODO: connect the endpoint. It needs an "AddSavingsRequest" ({ amount: number })
-    // and a service method that returns the updated goal. Then replace this comment with:
-    //
-    // this.saving.set(true);
-    // this.formError.set(null);
-    //
-    // this.savingsGoalService
-    //   .addSavings(goal.id, { amount })
-    //   .pipe(takeUntilDestroyed(this.destroyRef))
-    //   .subscribe({
-    //     next: (updatedGoal) => {
-    //       this.saving.set(false);
-    //       this.close();
-    //       this.saved.emit(updatedGoal);
-    //     },
-    //     error: (error: unknown) => {
-    //       this.saving.set(false);
-    //       this.formError.set(this.errorMessage(error));
-    //     },
-    //   });
-    //
-    // You will also need to inject SavingsGoalService and DestroyRef, import
-    // takeUntilDestroyed, and copy the errorMessage() method from
-    // SavingsGoalDialogComponent.
+    this.saving.set(true);
+    this.formError.set(null);
+
+    this.savingsGoalService.addSavings(
+      {amountToAdd: amount, id : goal.id}
+    ).pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updatedGoal) => {
+          this.saving.set(false);
+          this.close();
+          this.saved.emit(updatedGoal);
+        },
+        error: (error: unknown) => {
+          this.saving.set(false);
+          this.formError.set(this.errorMessage(error));
+        }
+      })
+  }
+
+  private errorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const message = error.error?.detail;
+      if (typeof message === 'string' && message.trim() !== '') {
+        return message;
+      }
+      if (error.status === 0) {
+        return 'We could not reach the server. Check your connection and try again.';
+      }
+    }
+    return 'Something went wrong. Check the values and try again.';
   }
 }
