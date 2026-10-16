@@ -13,18 +13,22 @@
         <span class="brand__name">BudgetFlow</span>
       </a>
 
-      <nav class="nav" aria-label="Main">
-        @for (item of navItems; track item.path) {
-          <a
-            class="nav__link"
-            [routerLink]="item.path"
-            routerLinkActive="nav__link--active"
-            ariaCurrentWhenActive="page"
-          >
-            {{ item.label }}
-          </a>
-        }
-      </nav>
+      <div class="header__actions">
+        <nav class="nav" aria-label="Main">
+          @for (item of navItems; track item.path) {
+            <a
+              class="nav__link"
+              [routerLink]="item.path"
+              routerLinkActive="nav__link--active"
+              ariaCurrentWhenActive="page"
+            >
+              {{ item.label }}
+            </a>
+          }
+        </nav>
+
+        <button type="button" class="btn btn--ghost" (click)="logOut()">Log out</button>
+      </div>
     </div>
   </header>
 

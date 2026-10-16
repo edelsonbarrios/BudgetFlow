@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject, signal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../../auth/auth.service';
 
 interface NavItem {
   label: string;
@@ -20,11 +21,14 @@ interface NavItem {
   styleUrls: ['./app-layout.component.scss'],
 })
 export class AppLayoutComponent implements AfterViewInit, OnDestroy {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
   /** Add a page to the menu by adding a line here. */
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', path: '/app/dashboard' },
     { label: 'Budgets', path: '/app/budgets' },
-    { label: 'Savings', path: '/app/savings'}
+    { label: 'Savings', path: '/app/savings' },
   ];
 
   /** True once the page has been scrolled a little; the header uses it to "lift" off the page. */
@@ -63,5 +67,10 @@ export class AppLayoutComponent implements AfterViewInit, OnDestroy {
     const main = document.getElementById('main-content');
     main?.focus();
     main?.scrollIntoView();
+  }
+
+  logOut(): void {
+    this.authService.logout();
+    this.router.navigate(['/']);
   }
 }

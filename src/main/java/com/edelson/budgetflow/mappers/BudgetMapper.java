@@ -16,10 +16,12 @@ public interface BudgetMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "categories", ignore = true)
+    @Mapping(target = "user", ignore = true)
     Budget toEntity(CreateBudgetRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
     @Mapping(target = "categories", ignore = true)
     void updateEntity(UpdateBudgetRequest request, @MappingTarget Budget budget);
 

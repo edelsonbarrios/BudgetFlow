@@ -95,6 +95,13 @@
       box-shadow var(--duration-base) var(--ease);
   }
 
+  // Holds the menu and the log out button together on the right side.
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
   // After scrolling: the pill gets more solid, a little shorter, and casts a soft shadow.
   &--scrolled &__inner {
     height: calc(var(--header-height) - 10px);
@@ -223,6 +230,10 @@
   }
 
   .nav__link {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .btn {
     padding: var(--space-2) var(--space-3);
   }
 }

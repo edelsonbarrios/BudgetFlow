@@ -12,5 +12,6 @@ import java.util.Optional;
 @Repository
 public interface BudgetRepository extends JpaRepository<Budget, Long>, JpaSpecificationExecutor<Budget> {
     boolean existsByYearAndMonth(Integer year, Integer month);
+    boolean existsByUserIdAndYearAndMonth(Long userId, Integer year, Integer month);
     Optional<Budget> findByYearAndMonth(Integer year, Integer month);
 }

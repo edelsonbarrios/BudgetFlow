@@ -16,12 +16,14 @@ import org.mapstruct.ReportingPolicy;
 public interface SavingsGoalMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "user", ignore = true)
     SavingsGoal toEntity(CreateSavingsGoalRequest savingsGoal);
 
     SavingsGoalResponse toResponse(SavingsGoal savingsGoal);
 
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
     @Mapping(target ="currentAmount", ignore = true)
     @Mapping(target = "status", ignore = true)
     void updateSavingsGoal(UpdateSavingsGoalRequest request, @MappingTarget SavingsGoal goal);

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -42,8 +43,10 @@ public class BudgetController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<BudgetResponse> createBudget(@Valid @RequestBody CreateBudgetRequest request) {
-        return ResponseEntity.ok(budgetService.createBudget(request));
+    public ResponseEntity<BudgetResponse> createBudget(
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody CreateBudgetRequest request) {
+        return ResponseEntity.ok(budgetService.createBudget(userId, request));
     }
 
     @PutMapping("/{id}")

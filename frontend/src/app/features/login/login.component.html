@@ -1,0 +1,73 @@
+<main class="login">
+  <!-- Left: calm brand panel -->
+  <section class="brand" aria-labelledby="brand-title">
+    <span class="brand__blob brand__blob--one" aria-hidden="true"></span>
+    <span class="brand__blob brand__blob--two" aria-hidden="true"></span>
+
+    <div class="brand__inner">
+      <p class="brand__eyebrow">BudgetFlow</p>
+      <h2 id="brand-title" class="brand__title">Know what's left to spend</h2>
+      <p class="brand__text">
+        Set a limit for each category, then watch your month fill up. Clear, not stressful.
+      </p>
+
+      <ul class="brand__list">
+        @for (item of highlights; track item) {
+          <li class="brand__item">
+            <svg class="brand__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+            <span>{{ item }}</span>
+          </li>
+        }
+      </ul>
+
+      <!-- Decorative mini preview (made-up numbers) -->
+      <div class="mini" aria-hidden="true">
+        <div class="mini__top">
+          <span class="mini__label">Left to spend</span>
+          <span class="mini__chip">You're under budget, nice</span>
+        </div>
+        <p class="mini__amount num">$1,284</p>
+        <div class="mini__bar"><div class="mini__fill"></div></div>
+        <p class="mini__sub num">68% of $4,000 used</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right: sign-in card -->
+  <section class="signin" aria-labelledby="signin-title">
+    <div class="signin__card">
+      <h1 id="signin-title" class="signin__title">Welcome to BudgetFlow</h1>
+      <p class="signin__subtitle">
+        Sign in with Google to continue. New here? Your account is created automatically, no
+        password needed.
+      </p>
+
+      <div class="signin__action" [class.signin__action--busy]="signingIn()">
+        @if (loadingButton()) {
+          <span class="signin__skeleton" aria-hidden="true"></span>
+        }
+        <div #googleButton class="signin__google"></div>
+      </div>
+
+      @if (signingIn()) {
+        <p class="signin__status" role="status">
+          <span class="signin__spinner" aria-hidden="true"></span>
+          Signing you in…
+        </p>
+      }
+
+      @if (errorMessage()) {
+        <p class="signin__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <p class="signin__fine">
+        We only receive your name, email and profile photo from Google. We never see your Google
+        password.
+      </p>
+
+      <a class="signin__back" routerLink="/">← Back to home</a>
+    </div>
+  </section>
+</main>

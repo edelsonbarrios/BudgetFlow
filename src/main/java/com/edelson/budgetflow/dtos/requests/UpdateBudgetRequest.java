@@ -14,6 +14,9 @@ public record UpdateBudgetRequest(
         Integer year,
         @NotNull(message = "Total income is required")
         @PositiveOrZero(message = "Total income value cannot be a negative number")
-        BigDecimal totalIncome
+        BigDecimal totalIncome,
+
+       @Positive(message = "User identifier is missing")
+       Long userId
 )
 { }

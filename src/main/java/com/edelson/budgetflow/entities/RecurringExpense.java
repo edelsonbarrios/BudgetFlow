@@ -16,6 +16,10 @@ public class RecurringExpense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     // The shared category, so the template works before any budget exists.
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
