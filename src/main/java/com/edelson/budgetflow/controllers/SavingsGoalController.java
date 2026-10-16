@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,22 +23,25 @@ public class SavingsGoalController {
 
     @PostMapping("/filter-goals")
     public ResponseEntity<PageResponse<SavingsGoalResponse>> filterPaginatedSavingsGoals(
-           @Valid @RequestBody SavingsGoalFilters filters
+           @Valid @RequestBody SavingsGoalFilters filters,
+           @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.ok(savingsGoalService.filterPaginatedSavingsGoal(filters));
+        return ResponseEntity.ok(savingsGoalService.filterPaginatedSavingsGoal(filters, userId));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<SavingsGoalResponse> createSavingsGoal(
-            @Valid @RequestBody CreateSavingsGoalRequest request
+            @Valid @RequestBody CreateSavingsGoalRequest request,
+            @AuthenticationPrincipal Long userId
             ) {
-        return ResponseEntity.ok(savingsGoalService.createSavingsGoal(request));
+        return ResponseEntity.ok(savingsGoalService.createSavingsGoal(request,userId));
     }
 
     @PatchMapping("/add-savings")
     public ResponseEntity<SavingsGoalResponse> addSavings(
-           @Valid @RequestBody AddSavingsRequest request) {
+           @Valid @RequestBody AddSavingsRequest request
+           ) {
         return ResponseEntity.ok(savingsGoalService.addSavings(request));
     }
 

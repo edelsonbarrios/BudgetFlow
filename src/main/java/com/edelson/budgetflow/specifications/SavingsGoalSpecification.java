@@ -25,4 +25,8 @@ public class SavingsGoalSpecification {
         return (root, query, cb)
         -> targetDate == null ? cb.conjunction() : cb.equal(root.get("targetDate"), targetDate);
     }
+
+    public static Specification<SavingsGoal> hasUserId(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
 }

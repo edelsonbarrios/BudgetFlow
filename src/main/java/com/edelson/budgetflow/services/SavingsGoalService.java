@@ -7,11 +7,13 @@ import com.edelson.budgetflow.dtos.requests.CreateSavingsGoalRequest;
 import com.edelson.budgetflow.dtos.requests.UpdateSavingsGoalRequest;
 import com.edelson.budgetflow.dtos.responses.SavingsGoalResponse;
 import com.edelson.budgetflow.entities.SavingsGoal;
+import com.edelson.budgetflow.entities.User;
 import com.edelson.budgetflow.enums.SavingsGoalStatus;
 import com.edelson.budgetflow.exceptions.BusinessRuleException;
 import com.edelson.budgetflow.exceptions.ResourceNotFoundException;
 import com.edelson.budgetflow.mappers.SavingsGoalMapper;
 import com.edelson.budgetflow.repository.SavingsGoalRepository;
+import com.edelson.budgetflow.repository.UserRepository;
 import com.edelson.budgetflow.specifications.SavingsGoalSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,12 +33,15 @@ import java.util.*;
 public class SavingsGoalService {
     private final SavingsGoalRepository savingsGoalRepository;
     private final SavingsGoalMapper savingsGoalMapper;
+    private final UserRepository userRepository;
+
+
     private static final Set<SavingsGoalStatus> VALID_STATUSES = EnumSet.of(
             SavingsGoalStatus.ACTIVE,
             SavingsGoalStatus.PAUSED
     );
 
-    public PageResponse<SavingsGoalResponse> filterPaginatedSavingsGoal(SavingsGoalFilters filters) {
+    public PageResponse<SavingsGoalResponse> filterPaginatedSavingsGoal(SavingsGoalFilters filters, Long userId) {
         SavingsGoalStatus statusValue = parseStatus(filters.status());
 
         Pageable pageable = PageRequest.of(
@@ -48,7 +53,8 @@ public class SavingsGoalService {
         Specification<SavingsGoal> spec = Specification
                 .where(SavingsGoalSpecification.hasName(filters.searchQuery()))
                 .and(SavingsGoalSpecification.hasStatus(statusValue))
-                .and(SavingsGoalSpecification.hasTargetDate(filters.targetDate()));
+                .and(SavingsGoalSpecification.hasTargetDate(filters.targetDate()))
+                .and(SavingsGoalSpecification.hasUserId(userId));
 
         Page<SavingsGoal> savingsGoals = savingsGoalRepository.findAll(spec, pageable);
 
@@ -66,8 +72,14 @@ public class SavingsGoalService {
     }
 
     @Transactional
-    public SavingsGoalResponse createSavingsGoal(CreateSavingsGoalRequest request) {
+    public SavingsGoalResponse createSavingsGoal(CreateSavingsGoalRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User with id '%s' could not be found".formatted(userId)
+                ));
+
         SavingsGoal newSavingsGoal = savingsGoalMapper.toEntity(request);
+        newSavingsGoal.setUser(user);
 
         SavingsGoal createSavingsGoal = savingsGoalRepository.save(newSavingsGoal);
 
