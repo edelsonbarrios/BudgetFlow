@@ -2,6 +2,7 @@ package com.edelson.budgetflow.controllers;
 
 import ch.qos.logback.core.pattern.util.RegularEscapeUtil;
 import com.edelson.budgetflow.common.web.PageResponse;
+import com.edelson.budgetflow.dtos.filters.FilterBudgetsFilters;
 import com.edelson.budgetflow.dtos.requests.CreateBudgetRequest;
 import com.edelson.budgetflow.dtos.requests.UpdateBudgetRequest;
 import com.edelson.budgetflow.dtos.responses.BudgetResponse;
@@ -27,18 +28,20 @@ import java.net.URI;
 public class BudgetController {
     private final BudgetService budgetService;
 
-    @GetMapping
+    @PostMapping("filter-by-user")
     public PageResponse<BudgetResponse> filterBudgets(
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Integer month,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "12") int size, Sort sort) {
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody FilterBudgetsFilters request) {
         Pageable pageable = PageRequest.of(
-                page - 1,
-                size,
+                request.page() - 1,
+                request.size(),
                 Sort.by(Sort.Order.asc("year"), Sort.Order.asc("month"))
         );
-        return  budgetService.filterBudgetsByMonthAndYear(month, year, pageable);
+        return  budgetService.filterBudgetsByMonthAndYear(request.month(),
+                request.year(),
+                pageable,
+                userId
+                );
     }
 
     @PostMapping

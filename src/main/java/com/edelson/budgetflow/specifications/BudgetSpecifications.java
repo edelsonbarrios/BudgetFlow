@@ -13,4 +13,9 @@ public class BudgetSpecifications {
         return (root, query, cb)
         -> month == null ? null : cb.equal(root.get("month"), month);
     }
+
+    public static Specification<Budget> hasUserId(Long userId) {
+        return (root, query, cb)
+        -> cb.equal(root.get("user").get("id"), userId);
+    }
 }

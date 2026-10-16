@@ -18,9 +18,10 @@ public class BudgetSummaryService {
     @Transactional(readOnly = true)
     public BudgetSummaryResponse getBudgetSummaryByMontAndYear(
             Integer month,
-            Integer year
+            Integer year,
+            Long userId
     ) {
-        Budget budget = budgetRepository.findByYearAndMonth(year, month)
+        Budget budget = budgetRepository.findByYearAndMonthAndUserId(year, month, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Budget for %d/%d does not exists".formatted(month, year)));
 
         return budgetMapper.toSummaryResponse(budget);

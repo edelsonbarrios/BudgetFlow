@@ -16,16 +16,8 @@ export class BudgetService {
   private readonly baseUrl = `${DevelopmentUrl}/api/budgets`
 
   getBudgets(filter: BudgetFilter): Observable<PageResponse<Budget>> {
-    let params = new HttpParams().set('page', filter.page).set('size', filter.size);
-
-    if (filter.year !== null) {
-      params = params.set('year', filter.year);
-    }
-    if (filter.month !== null) {
-      params = params.set('month', filter.month);
-    }
-
-    return this.http.get<PageResponse<Budget>>(this.baseUrl, { params });
+    console.log(`GET BUDGETS IS BEING CALLED!`);
+    return this.http.post<PageResponse<Budget>>(`${this.baseUrl}/filter-by-user`, filter);
   }
 
   createBudget(request: CreateBudgetRequest): Observable<Budget> {

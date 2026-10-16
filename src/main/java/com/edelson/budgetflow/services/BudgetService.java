@@ -34,11 +34,14 @@ public class BudgetService {
     public PageResponse<BudgetResponse> filterBudgetsByMonthAndYear(
             Integer month,
             Integer year,
-            Pageable pageable
+            Pageable pageable,
+            Long userId
     ) {
         Specification<Budget> spec = Specification
                 .where(BudgetSpecifications.hasYear(year))
-                .and(BudgetSpecifications.hasMonth(month));
+                .and(BudgetSpecifications.hasMonth(month))
+                .and(BudgetSpecifications.hasUserId(userId));
+
 
         Page<Budget> budgets = budgetRepository.findAll(spec, pageable);
 
@@ -62,7 +65,7 @@ public class BudgetService {
             );
         }
 
-        Budget newBudget = budgetMapper.toEntity(request); 
+        Budget newBudget = budgetMapper.toEntity(request);
         newBudget.setUser(user);
         Budget createBudget = budgetRepository.save(newBudget);
 

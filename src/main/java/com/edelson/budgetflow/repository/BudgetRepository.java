@@ -13,5 +13,5 @@ import java.util.Optional;
 public interface BudgetRepository extends JpaRepository<Budget, Long>, JpaSpecificationExecutor<Budget> {
     boolean existsByYearAndMonth(Integer year, Integer month);
     boolean existsByUserIdAndYearAndMonth(Long userId, Integer year, Integer month);
-    Optional<Budget> findByYearAndMonth(Integer year, Integer month);
+    Optional<Budget> findByYearAndMonthAndUserId(Integer year, Integer month, Long userId);
 }

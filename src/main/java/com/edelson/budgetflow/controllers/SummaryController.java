@@ -6,6 +6,7 @@ import com.edelson.budgetflow.services.BudgetSummaryService;
 import com.edelson.budgetflow.services.CategorySummaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,9 +23,10 @@ public class SummaryController {
     @GetMapping("/budget/{month}/{year}")
     public ResponseEntity<BudgetSummaryResponse> getBudgetSummaryByMonthAndYear(
             @PathVariable Integer month,
-            @PathVariable Integer year
+            @PathVariable Integer year,
+            @AuthenticationPrincipal Long userId
     ) {
-        return ResponseEntity.ok(budgetSummaryService.getBudgetSummaryByMontAndYear(month, year));
+        return ResponseEntity.ok(budgetSummaryService.getBudgetSummaryByMontAndYear(month, year, userId));
     }
 
     @GetMapping("/budget-category/{id}")
