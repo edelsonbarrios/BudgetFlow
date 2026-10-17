@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import {environment} from '../../shared/environments/environment';
+import {environment, USER} from '../../shared/environments/environment';
+import {TOKEN_KEY, USER_EMAIL, USER_NAME} from '../../shared/environments/environment';
 
 export interface AuthResponse {
   token: string;
@@ -9,8 +10,6 @@ export interface AuthResponse {
   name: string;
   pictureUrl: string | null;
 }
-
-const TOKEN_KEY = 'budgetflow_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -24,6 +23,7 @@ export class AuthService {
       .pipe(
         tap((response) => {
           localStorage.setItem(TOKEN_KEY, response.token);
+          localStorage.setItem(USER, JSON.stringify(response));
           this.user.set(response);
         })
       );
@@ -39,6 +39,25 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER);
+    localStorage.removeItem(USER_NAME);
+    localStorage.removeItem(USER_EMAIL);
     this.user.set(null);
+  }
+
+  getStoredUser() : AuthResponse | null {
+    const rawUser = localStorage.getItem(USER);
+
+    if(rawUser == null) {
+      console.log(`User record could not be found`);
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUser) as AuthResponse;
+    }catch {
+      console.log(`User value could not be parsed`);
+      return null;
+    }
   }
 }

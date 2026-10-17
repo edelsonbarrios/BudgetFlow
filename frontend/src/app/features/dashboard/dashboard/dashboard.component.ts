@@ -5,8 +5,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
-import {DashboardService} from '../../budgets/dashboard-service/dashboard.service';
-import {BudgetAlert} from '../../budgets/dtos/budget-alert';
+import { AuthService } from '../../../core/auth/auth.service';
+import { DashboardService } from '../../budgets/dashboard-service/dashboard.service';
+import { BudgetAlert } from '../../budgets/dtos/budget-alert';
 import { BudgetSummary } from '../../budgets/dtos/budget-summary';
 import { CURRENCY_CODE, MONTH_NAMES } from '../../budgets/budget-helpers/budget-helpers';
 
@@ -24,12 +25,33 @@ import { CURRENCY_CODE, MONTH_NAMES } from '../../budgets/budget-helpers/budget-
 })
 export class DashboardComponent implements OnInit {
   private readonly dashboardService = inject(DashboardService);
+  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly currencyCode = CURRENCY_CODE;
   readonly skeletonRows = [1, 2, 3];
 
   private readonly now = new Date();
+
+  // ---- Who is signed in (restored after a refresh by AuthService) ----
+  readonly user = this.authService.getStoredUser();
+
+  /** Set when the photo cannot be loaded, so we fall back to initials. */
+  readonly imageFailed = signal(false);
+
+  /** Up to two letters, shown when there is no photo. */
+  readonly initials = computed(() => {
+    const user = this.user;
+    if (!user) {
+      return '';
+    }
+    const parts = user.name.trim().split(/\s+/).filter(Boolean);
+    const letters =
+      parts.length > 1
+        ? parts[0][0] + parts[parts.length - 1][0]
+        : (parts[0]?.[0] ?? user.email[0]);
+    return letters.toUpperCase();
+  });
 
   // ---- The month being viewed (starts with this month) ----
   readonly year = signal(this.now.getFullYear());

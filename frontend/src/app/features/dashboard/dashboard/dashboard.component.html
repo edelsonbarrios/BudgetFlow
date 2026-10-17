@@ -2,6 +2,30 @@
   <div class="container">
     <header class="page__head">
       <div>
+        @if (user; as u) {
+          <div class="profile">
+            @if (u.pictureUrl && !imageFailed()) {
+              <img
+                class="profile__avatar"
+                [src]="u.pictureUrl"
+                alt=""
+                width="44"
+                height="44"
+                referrerpolicy="no-referrer"
+                (error)="imageFailed.set(true)"
+              />
+            } @else {
+              <span class="profile__avatar profile__avatar--initials" aria-hidden="true">
+                {{ initials() }}
+              </span>
+            }
+            <div class="profile__text">
+              <p class="profile__name">{{ u.name }}</p>
+              <p class="profile__email">{{ u.email }}</p>
+            </div>
+          </div>
+        }
+
         <h1 class="page__title">Dashboard</h1>
         <p class="page__text">How this month is going, and where your money is.</p>
       </div>

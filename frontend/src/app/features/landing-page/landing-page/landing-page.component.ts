@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {Component, inject} from '@angular/core';
+import {Router, RouterLink} from '@angular/router';
+import {AuthService} from '../../../core/auth/auth.service';
 
 /** One slice of the preview donut. `start` and `percent` are out of 100. */
 interface PreviewSlice {
@@ -45,6 +46,8 @@ export class LandingPageComponent {
   readonly previewSpent = 2716;
   readonly previewLeft = this.previewBudget - this.previewSpent;
   readonly previewPercentUsed = Math.round((this.previewSpent / this.previewBudget) * 100);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   /** Where the money went. Amounts add up to previewSpent. */
   readonly slices: PreviewSlice[] = [
@@ -62,4 +65,12 @@ export class LandingPageComponent {
     { name: 'Transport', spent: 380, limit: 500, percentUsed: 76, fill: 76, status: 'ok', note: 'On track' },
     { name: 'Fun', spent: 272, limit: 240, percentUsed: 113, fill: 100, status: 'exceeded', note: 'Over by $32' },
   ];
+
+  getStartedClicked() {
+    if(!this.authService.isLoggedIn()) {
+      this.router.navigateByUrl('/login');
+      return;
+    }
+    this.router.navigateByUrl('/app/budgets');
+  }
 }

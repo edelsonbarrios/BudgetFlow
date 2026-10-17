@@ -16,7 +16,6 @@ export class BudgetService {
   private readonly baseUrl = `${DevelopmentUrl}/api/budgets`
 
   getBudgets(filter: BudgetFilter): Observable<PageResponse<Budget>> {
-    console.log(`GET BUDGETS IS BEING CALLED!`);
     return this.http.post<PageResponse<Budget>>(`${this.baseUrl}/filter-by-user`, filter);
   }
 
