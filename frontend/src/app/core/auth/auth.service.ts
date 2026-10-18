@@ -49,14 +49,12 @@ export class AuthService {
     const rawUser = localStorage.getItem(USER);
 
     if(rawUser == null) {
-      console.log(`User record could not be found`);
       return null;
     }
 
     try {
       return JSON.parse(rawUser) as AuthResponse;
     }catch {
-      console.log(`User value could not be parsed`);
       return null;
     }
   }

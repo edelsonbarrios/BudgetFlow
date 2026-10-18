@@ -6,6 +6,7 @@ import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
 import { BudgetCategory } from '../dtos/budget-category';
 import { CreateBudgetCategoryRequest } from '../dtos/create-budget-category-request';
 import { UpdateBudgetCategoryRequest } from '../dtos/update-budget-category-request';
+import {environment} from '../../../shared/environments/environment';
 
 
 /**
@@ -17,10 +18,9 @@ import { UpdateBudgetCategoryRequest } from '../dtos/update-budget-category-requ
 @Injectable({ providedIn: 'root' })
 export class BudgetCategoryService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${DevelopmentUrl}/api/budget-categories`
+  private readonly baseUrl = `${environment.apiUrl}/api/budget-categories`
 
   createCategory(request: CreateBudgetCategoryRequest): Observable<BudgetCategory> {
-    console.log(`${JSON.stringify(request)}`);
     return this.http.post<BudgetCategory>(this.baseUrl, request);
   }
 
