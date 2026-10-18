@@ -11,5 +11,6 @@ import java.util.List;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     Page<Expense> findAllByCategoryId(Long budgetCategoryId, Pageable pageable);
-}
 
+    List<Expense> findAllByCategoryBudgetIdAndRecurringExpenseIsNotNull(Long budgetId);
+}

@@ -54,6 +54,7 @@ public class ExpenseService {
         }
 
         Expense newExpense = expenseMapper.toEntity(request);
+        newExpense.setRecurringExpense(recurringExpense);
 
         newExpense.setExpenseDate(LocalDate.now());
         newExpense.setCategory(budgetCategory);

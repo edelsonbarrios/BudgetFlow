@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface RecurringExpenseRepository extends JpaRepository<RecurringExpense, Long> {
-    List<RecurringExpense> findAllByUserId(Long userId);
+    List<RecurringExpense> findAllByUserIdAndActiveTrue(Long userId);
 }
