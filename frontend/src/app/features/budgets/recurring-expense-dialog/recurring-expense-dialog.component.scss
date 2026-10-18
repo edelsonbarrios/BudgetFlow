@@ -1,0 +1,231 @@
+// =============================================================================
+// RecurringExpenseDialogComponent
+// A small popup form. The dialog, field and category dropdown styles are the same as
+// in BudgetCategoryDialogComponent and ExpenseDialogComponent. When a third component
+// needs them, move them into a global file in src/app/styles.
+// All colors, spacing and motion come from the global tokens (_tokens.scss).
+//
+// Motion rules for this file (same as the pages):
+//  - Entrance animations use fill-mode "backwards", never "both" or "forwards".
+//  - Anything that moves lives inside prefers-reduced-motion: no-preference.
+// =============================================================================
+
+:host {
+  // Move --ease-out to _tokens.scss when you reuse it on other pages, then
+  // delete it here.
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dialog {
+  width: min(440px, calc(100% - var(--space-6)));
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+  // The category list floats over the fields below it, so it must not be clipped.
+  overflow: visible;
+
+  &::backdrop {
+    background: rgba(28, 43, 42, 0.4);
+  }
+
+  &__form {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  // Small line under the title: what a recurring expense is.
+  &__hint {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__control {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: var(--color-text-soft);
+    }
+
+    // The soft ring is the visible focus signal. The border turns dark so the
+    // focus state still has strong contrast, and the transparent outline keeps
+    // it visible in high-contrast mode.
+    &:focus-visible {
+      outline: 2px solid transparent;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-exceeded);
+    }
+  }
+
+  // Quiet help text under a field, like the short-month note under the due day.
+  &__hint {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__error {
+    color: var(--color-exceeded);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  // The "Try again" button inside an error line. It looks like a link, not a full button.
+  &__link {
+    margin-left: var(--space-1);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Amount and due day sit side by side.
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+// The category dropdown: a button that opens a short list with its own scrollbar.
+// It is defined after .field so its background-image wins over .field__control.
+.picker {
+  position: relative;
+
+  &__trigger {
+    display: block;
+    text-align: left;
+    cursor: pointer;
+    padding-right: var(--space-6);
+    // A small chevron drawn with two gradients (no image file needed).
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+      linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) 55%,
+      calc(100% - 14px) 55%;
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+  }
+
+  &__placeholder {
+    color: var(--color-text-muted);
+  }
+
+  // About five rows tall. More than that scrolls inside the list.
+  &__list {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 176px;
+    margin: 0;
+    padding: var(--space-1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+  }
+
+  &__option {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    cursor: pointer;
+
+    // Highlighted by mouse or keyboard.
+    &[data-active='true'] {
+      background: color-mix(in srgb, var(--color-text) 8%, transparent);
+    }
+
+    // The category that is currently chosen.
+    &[aria-selected='true'] {
+      font-weight: var(--font-weight-bold);
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialog-in 0.3s var(--ease-out) backwards;
+  }
+
+  .field__error {
+    animation: fade-in 0.25s ease backwards;
+  }
+}

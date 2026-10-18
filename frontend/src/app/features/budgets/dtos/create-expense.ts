@@ -1,7 +1,7 @@
 export interface CreateExpenseRequest {
-  /** The budget category row id (BudgetCategory.id), NOT the shared categoryId. */
   budgetCategoryId: number;
+  recurringExpenseId?: number | null;
   amount: number;
-  expenseDate: string; // 'YYYY-MM-DD'
+  expenseDate: string;
   description: string | null;
 }

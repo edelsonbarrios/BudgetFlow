@@ -24,6 +24,7 @@ import { BudgetCategory } from '../dtos/budget-category';
 import { CreateExpenseRequest } from '../dtos/create-expense';
 import { Expense } from '../dtos/expense';
 import { ExpenseService } from '../expense-service/expense.service';
+import {RecurringMonthItem} from '../dtos/recurring-month-item';
 import { monthLabel } from '../budget-helpers/budget-helpers';
 
 /** 5 becomes "05", so dates always look like 2026-10-05. */
@@ -37,9 +38,12 @@ const pad = (n: number): string => String(n).padStart(2, '0');
  *   <app-expense-dialog #expenseDialog (saved)="onExpenseSaved($event)" />
  *   <button (click)="expenseDialog.open(budget)">Add expense</button>
  *   <button (click)="expenseDialog.open(budget, category)">Add to this category</button>
+ *   <button (click)="expenseDialog.openForRecurring(budget, item)">Add recurring</button>
  *
  * The user picks one of the budget's categories (already chosen when one is passed),
  * then types an amount, a date and a note.
+ * For a recurring expense, the form starts filled from it (amount, note, suggested date,
+ * and the category with the same name), and the saved expense is linked to it.
  * The dialog saves the expense itself (POST) and then emits `saved`.
  */
 @Component({
@@ -62,10 +66,17 @@ export class ExpenseDialogComponent {
   // ---- State ----
   /** The budget this expense will belong to. null until open() runs. */
   readonly budget = signal<Budget | null>(null);
+  /** The recurring expense this one comes from. null for a normal expense. */
+  readonly recurringExpenseId = signal<number | null>(null);
   readonly saving = signal(false);
   readonly formError = signal<string | null>(null);
 
   // ---- Values worked out from the budget (they update by themselves) ----
+  /** The popup title changes when the expense comes from a recurring one. */
+  readonly heading = computed(() =>
+    this.recurringExpenseId() === null ? 'Add expense' : 'Add recurring expense',
+  );
+
   /** The month shown under the title, like "October 2026". */
   readonly title = computed(() => {
     const budget = this.budget();
@@ -108,7 +119,7 @@ export class ExpenseDialogComponent {
     return value >= this.minDate() && value <= this.maxDate() ? null : { outOfMonth: true };
   };
 
-  /** Same rules as CreateExpenseRequest on the backend. The note is optional. */
+  /** Same rules as ExpenseRequest on the backend. The note is optional. */
   readonly form = this.fb.group({
     budgetCategoryId: this.fb.control<number | null>(null, Validators.required),
     amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
@@ -123,15 +134,34 @@ export class ExpenseDialogComponent {
   open(budget: Budget, category?: BudgetCategory): void {
     // The budget goes first, so the date check below already knows which month to use.
     this.budget.set(budget);
+    this.recurringExpenseId.set(null);
     this.form.reset({
       budgetCategoryId: category?.id ?? null,
       amount: null,
       expenseDate: this.defaultDate(budget),
       description: '',
     });
-    this.formError.set(null);
-    this.saving.set(false);
-    this.dialog?.nativeElement.showModal();
+    this.show();
+  }
+
+  /**
+   * Opens the popup filled from a recurring expense. The user can change anything
+   * before saving. The category is the one in this budget with the same name,
+   * or empty when this budget does not have it.
+   */
+  openForRecurring(budget: Budget, item: RecurringMonthItem): void {
+    const name = item.categoryName.trim().toLowerCase();
+    const category = budget.categories.find((c) => c.name.trim().toLowerCase() === name);
+
+    this.budget.set(budget);
+    this.recurringExpenseId.set(item.recurringExpenseId);
+    this.form.reset({
+      budgetCategoryId: category?.id ?? null,
+      amount: item.amount,
+      expenseDate: item.suggestedDate,
+      description: item.description,
+    });
+    this.show();
   }
 
   close(): void {
@@ -160,6 +190,7 @@ export class ExpenseDialogComponent {
 
     const request: CreateExpenseRequest = {
       budgetCategoryId,
+      recurringExpenseId: this.recurringExpenseId(),
       amount,
       expenseDate,
       description: description.trim() || null,
@@ -182,6 +213,13 @@ export class ExpenseDialogComponent {
           this.formError.set(this.errorMessage(error));
         },
       });
+  }
+
+  /** Clears the messages and shows the popup. Both open methods end here. */
+  private show(): void {
+    this.formError.set(null);
+    this.saving.set(false);
+    this.dialog?.nativeElement.showModal();
   }
 
   /** Today when it falls inside the budget's month, otherwise the first day of that month. */

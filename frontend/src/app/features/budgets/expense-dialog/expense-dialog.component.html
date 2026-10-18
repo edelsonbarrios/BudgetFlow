@@ -2,7 +2,7 @@
 <dialog #dialog class="dialog" aria-labelledby="expense-dialog-title" (close)="onClosed()">
   <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <div>
-      <h2 id="expense-dialog-title" class="dialog__title">Add expense</h2>
+      <h2 id="expense-dialog-title" class="dialog__title">{{ heading() }}</h2>
       @if (budget()) {
         <p class="dialog__hint num">{{ title() }}</p>
       }

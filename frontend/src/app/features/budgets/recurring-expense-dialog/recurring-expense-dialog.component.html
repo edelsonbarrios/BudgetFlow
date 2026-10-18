@@ -1,0 +1,171 @@
+<!-- Native <dialog>: focus stays inside and Escape closes it. -->
+<dialog #dialog class="dialog" aria-labelledby="recurring-dialog-title" (close)="onClosed()">
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div>
+      <h2 id="recurring-dialog-title" class="dialog__title">Add recurring expense</h2>
+      <p class="dialog__hint">Something you pay every month, like rent or a subscription.</p>
+    </div>
+
+    <!-- Name -->
+    <div class="field">
+      <label class="field__label" for="recurring-description">Name</label>
+      <input
+        id="recurring-description"
+        class="field__control"
+        type="text"
+        maxlength="255"
+        placeholder="For example, Rent"
+        formControlName="description"
+        [attr.aria-invalid]="form.controls.description.touched && form.controls.description.invalid"
+        [attr.aria-describedby]="
+          form.controls.description.touched && form.controls.description.invalid
+            ? 'recurring-description-error'
+            : null
+        "
+      />
+      @if (form.controls.description.touched && form.controls.description.invalid) {
+        <p id="recurring-description-error" class="field__error">
+          Enter a name, up to 255 characters.
+        </p>
+      }
+    </div>
+
+    <!-- Category -->
+    <div class="field">
+      <label class="field__label" for="recurring-category">Category</label>
+      <div class="picker">
+        <button
+          id="recurring-category"
+          type="button"
+          class="field__control picker__trigger"
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-controls="recurring-category-listbox"
+          [attr.aria-expanded]="categoryOpen()"
+          [attr.aria-activedescendant]="activeOptionId()"
+          [attr.aria-invalid]="
+            form.controls.categoryId.touched && form.controls.categoryId.invalid
+          "
+          [attr.aria-describedby]="categorySelectDescribedBy()"
+          (click)="toggleCategoryList()"
+          (keydown)="onCategoryKeydown($event)"
+          (keyup.space)="$event.preventDefault()"
+          (blur)="closeCategoryList()"
+        >
+          @if (selectedCategoryName(); as name) {
+            {{ name }}
+          } @else {
+            <span class="picker__placeholder">
+              {{ categoriesLoading() ? 'Loading categories…' : 'Choose a category' }}
+            </span>
+          }
+        </button>
+
+        @if (categoryOpen()) {
+          <!-- mousedown is blocked so the button keeps focus and does not close the list early. -->
+          <ul
+            #categoryList
+            id="recurring-category-listbox"
+            class="picker__list"
+            role="listbox"
+            aria-label="Categories"
+            (mousedown)="$event.preventDefault()"
+          >
+            @for (category of categories(); track category.id; let i = $index) {
+              <li
+                class="picker__option"
+                role="option"
+                [id]="'recurring-category-option-' + category.id"
+                [attr.aria-selected]="category.id === form.controls.categoryId.value"
+                [attr.data-active]="i === activeOptionIndex()"
+                (mouseenter)="activeOptionIndex.set(i)"
+                (click)="chooseCategory(category)"
+              >
+                {{ category.name }}
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (categoriesError()) {
+        <p id="recurring-category-error" class="field__error" role="alert">
+          We could not load the categories.
+          <button type="button" class="field__link" (click)="loadCategories()">Try again</button>
+        </p>
+      } @else if (noCategories()) {
+        <p id="recurring-category-hint" class="field__hint">No categories are available yet.</p>
+      } @else if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
+        <p id="recurring-category-error" class="field__error">Choose a category.</p>
+      }
+    </div>
+
+    <div class="field-row">
+      <!-- Amount -->
+      <div class="field">
+        <label class="field__label" for="recurring-amount">Amount</label>
+        <input
+          id="recurring-amount"
+          class="field__control"
+          type="number"
+          inputmode="decimal"
+          step="0.01"
+          min="0.01"
+          formControlName="amount"
+          [attr.aria-invalid]="form.controls.amount.touched && form.controls.amount.invalid"
+          [attr.aria-describedby]="
+            form.controls.amount.touched && form.controls.amount.invalid
+              ? 'recurring-amount-error'
+              : null
+          "
+        />
+        @if (form.controls.amount.touched && form.controls.amount.invalid) {
+          <p id="recurring-amount-error" class="field__error">Enter an amount above 0.</p>
+        }
+      </div>
+
+      <!-- Due day -->
+      <div class="field">
+        <label class="field__label" for="recurring-due-day">Due day</label>
+        <input
+          #dueDayInput
+          id="recurring-due-day"
+          class="field__control"
+          type="number"
+          inputmode="numeric"
+          step="1"
+          min="1"
+          max="31"
+          formControlName="dueDay"
+          (input)="clampDueDay(dueDayInput)"
+          [attr.aria-invalid]="form.controls.dueDay.touched && form.controls.dueDay.invalid"
+          [attr.aria-describedby]="
+            form.controls.dueDay.touched && form.controls.dueDay.invalid
+              ? 'recurring-due-day-error'
+              : 'recurring-due-day-hint'
+          "
+        />
+        @if (form.controls.dueDay.touched && form.controls.dueDay.invalid) {
+          <p id="recurring-due-day-error" class="field__error">
+            Enter a day between 1 and 31.
+          </p>
+        } @else {
+          <p id="recurring-due-day-hint" class="field__hint">
+            Shorter months use their last day.
+          </p>
+        }
+      </div>
+    </div>
+
+    @if (formError()) {
+      <p class="field__error" role="alert">{{ formError() }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--ghost" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : 'Save recurring expense' }}
+      </button>
+    </div>
+  </form>
+</dialog>

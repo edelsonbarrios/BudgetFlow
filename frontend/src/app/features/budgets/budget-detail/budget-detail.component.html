@@ -77,6 +77,67 @@
           </div>
         </div>
 
+        <!-- Recurring this month: hidden when there is nothing to show -->
+        @if (recurringError()) {
+          <div class="notice notice--error" role="alert">
+            <span>{{ recurringError() }}</span>
+            <button type="button" class="btn btn--ghost" (click)="loadRecurring()">
+              Try again
+            </button>
+          </div>
+        } @else if (recurringItems().length > 0) {
+          <section class="recurring" aria-labelledby="recurring-title">
+            <div class="section-head">
+              <h2 id="recurring-title" class="section-title">Recurring this month</h2>
+              <p class="section-hint" aria-live="polite">
+                @if (recurringToAdd() > 0) {
+                  {{ recurringToAdd() }} still to add
+                } @else {
+                  All added this month, nice.
+                }
+              </p>
+            </div>
+
+            <ul class="rows">
+              @for (item of recurringItems(); track item.recurringExpenseId) {
+                <li class="row" [class.row--paid]="item.paid">
+                  <div class="row__main">
+                    <p class="row__name">{{ item.description }}</p>
+                    <p class="row__share num">
+                      @if (item.paid && item.paidDate) {
+                        Added {{ item.paidDate | date: 'MMM d' }}
+                      } @else {
+                        Suggested {{ item.suggestedDate | date: 'MMM d' }}
+                      }
+                      · {{ item.categoryName }}
+                    </p>
+                  </div>
+                  <p class="row__amount num">{{ item.amount | currency: currencyCode }}</p>
+                  <div class="row__actions">
+                    @if (item.paid) {
+                      <span class="added">
+                        <svg class="added__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path d="M5 12.5l4.5 4.5L19 7.5" />
+                        </svg>
+                        Added
+                      </span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn--ghost action--add"
+                        [attr.aria-label]="'Add ' + item.description + ' as an expense'"
+                        (click)="expenseDialog.openForRecurring(b, item)"
+                      >
+                        Add expense
+                      </button>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
         <!-- Categories -->
         <h2 class="section-title">Categories</h2>
 
@@ -128,8 +189,10 @@
   The popups live outside the states above, so they always exist.
   The page connects them:
    - the list asks to add an expense  -> the form opens with that category chosen
-   - the form saved an expense        -> the page shows a message, reloads the budget,
-                                         and the list reloads so the new expense shows at the top
+   - a recurring "Add expense" button -> the same form opens, filled from the recurring expense
+   - the form saved an expense        -> the page shows a message, reloads the budget and
+                                         the recurring list, and the expense list reloads
+                                         so the new expense shows at the top
 -->
 <app-budget-category-dialog #categoryDialog (saved)="onCategorySaved($event)" />
 <app-expense-list-dialog

@@ -1,8 +1,9 @@
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { Budget } from '../dtos/budget';
 import { BudgetCategory } from '../dtos/budget-category';
@@ -11,6 +12,8 @@ import { BudgetService } from '../budget-service/budget.service';
 import { BudgetCategoryDialogComponent } from '../budget-category-dialog/budget-category-dialog.component';
 import { ExpenseDialogComponent } from '../expense-dialog/expense-dialog.component';
 import { ExpenseListDialogComponent } from '../expense-list-dialog/expense-list-dialog.component';
+import {RecurringMonthItem} from '../dtos/recurring-month-item';
+import {RecurringExpenseService} from '../recurring-expense-service/recurring-expense.service';
 import {
   CURRENCY_CODE,
   allocatedPercent,
@@ -18,10 +21,15 @@ import {
 } from '../budget-helpers/budget-helpers';
 
 /**
- * One whole budget: income, totals, and every category with its buttons.
+ * One whole budget: income, totals, the recurring expenses to add this month,
+ * and every category with its buttons.
  * Adding and editing a category happens in BudgetCategoryDialogComponent.
  * Viewing a category's expenses happens in ExpenseListDialogComponent, and adding one
- * happens in ExpenseDialogComponent. This page connects the popups (see the template).
+ * happens in ExpenseDialogComponent (also used for the recurring "Add expense" button).
+ * This page connects the popups (see the template).
+ *
+ * The recurring list comes from the backend: the suggested date, and whether each
+ * one was already added in this budget. This page only shows it.
  *
  * The budget id comes from the address (/app/budgets/:id).
  * The page owns its own width. It sits inside the app shell, and the route
@@ -32,6 +40,7 @@ import {
   standalone: true,
   imports: [
     CurrencyPipe,
+    DatePipe,
     RouterLink,
     BudgetCategoryDialogComponent,
     ExpenseDialogComponent,
@@ -42,6 +51,7 @@ import {
 })
 export class BudgetDetailComponent implements OnInit {
   private readonly budgetService = inject(BudgetService);
+  private readonly recurringService = inject(RecurringExpenseService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -55,6 +65,10 @@ export class BudgetDetailComponent implements OnInit {
   readonly notFound = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
+
+  /** The recurring expenses for this budget's month. Empty until they load. */
+  readonly recurringItems = signal<RecurringMonthItem[]>([]);
+  readonly recurringError = signal<string | null>(null);
 
   // ---- Values read from the budget (they update by themselves) ----
   // The totals are calculated by the backend. "?? 0" is only for the moment before the
@@ -85,7 +99,13 @@ export class BudgetDetailComponent implements OnInit {
   /** Bar width, capped at 100 so an over-allocated bar never spills out. */
   readonly barFill = computed(() => Math.min(this.percent(), 100));
 
+  /** How many recurring expenses are still waiting to be added this month. */
+  readonly recurringToAdd = computed(
+    () => this.recurringItems().filter((item) => !item.paid).length,
+  );
+
   private budgetId = 0;
+  private recurringSubscription?: Subscription;
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -96,6 +116,7 @@ export class BudgetDetailComponent implements OnInit {
     }
     this.budgetId = id;
     this.load(true);
+    this.loadRecurring();
   }
 
   /**
@@ -127,6 +148,30 @@ export class BudgetDetailComponent implements OnInit {
       });
   }
 
+  /**
+   * Loads the recurring expenses for this budget's month.
+   * A failure here only affects this section, never the rest of the page.
+   * The request that is still running is cancelled first, so an older, slower
+   * answer can never replace a newer one.
+   */
+  loadRecurring(): void {
+    this.recurringSubscription?.unsubscribe();
+    this.recurringError.set(null);
+
+    this.recurringSubscription = this.recurringService
+      .getMonthItems(this.budgetId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => this.recurringItems.set(items),
+        error: () => {
+          this.recurringItems.set([]);
+          this.recurringError.set(
+            'We could not load your recurring expenses. Please try again.',
+          );
+        },
+      });
+  }
+
   /** Runs when the category dialog saved a category. */
   onCategorySaved(category: BudgetCategory): void {
     this.successMessage.set(`${category.name} saved, nice.`);
@@ -136,10 +181,13 @@ export class BudgetDetailComponent implements OnInit {
   /**
    * Runs when the expense dialog saved an expense.
    * The template also reloads the expense list that is open behind it.
+   * The recurring list reloads too, so an expense that came from a recurring one
+   * switches to "Added".
    */
   onExpenseSaved(expense: Expense): void {
     this.successMessage.set(`${expense.categoryName} expense saved, nice.`);
     this.load(false);
+    this.loadRecurring();
   }
 
   /** Whole-number percent of the income that this category takes. */

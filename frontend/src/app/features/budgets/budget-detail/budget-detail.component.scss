@@ -12,8 +12,9 @@
 //  - Anything that moves lives inside prefers-reduced-motion: no-preference.
 //
 // Page entrance order: back link, header, summary, section title, then each
-// category row slides in from the left a moment after the previous one.
+// row slides in from the left a moment after the previous one.
 // Row delays are fixed per position (SCSS loop), so no CSS variables are needed.
+// The recurring rows reuse the category row look, so both lists feel the same.
 // =============================================================================
 
 :host {
@@ -111,8 +112,9 @@
   }
 }
 
-// Expenses and Edit get their own tint, so they read as different actions.
-.action--expenses {
+// Expenses, Edit and Add expense get their own tint, so they read as different actions.
+.action--expenses,
+.action--add {
   --wipe: var(--color-primary-soft);
 }
 
@@ -273,13 +275,61 @@
   }
 }
 
-// ---- Category rows -----------------------------------------------------------------------------
+// ---- Section titles and the recurring section ---------------------------------------------------
 .section-title {
   margin-bottom: var(--space-4);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
 }
 
+.recurring {
+  margin-bottom: var(--space-7);
+}
+
+// The title and the small count sit on one line. The count drops below on narrow screens.
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  margin-bottom: var(--space-4);
+
+  .section-title {
+    margin-bottom: 0;
+  }
+}
+
+.section-hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+// "Added" chip: a check and a word, so it never depends on color alone.
+.added {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-ok-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+
+  &__icon {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--color-ok);
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+// ---- Rows (categories and recurring) --------------------------------------------------------------
 .rows {
   display: grid;
   gap: var(--space-3);
@@ -318,8 +368,11 @@
   }
 
   &__share {
+    overflow: hidden;
     color: var(--color-text-soft);
     font-size: var(--font-size-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__amount {
@@ -327,7 +380,12 @@
     white-space: nowrap;
   }
 
-  // Expenses and Edit sit together on the right of the row.
+  // An added recurring expense is quieter, so the ones still waiting stand out.
+  &--paid &__amount {
+    color: var(--color-text-muted);
+  }
+
+  // Buttons sit together on the right of the row.
   &__actions {
     display: flex;
     flex: none;
@@ -350,7 +408,7 @@
     gap: var(--space-3) var(--space-5);
   }
 
-  // Two buttons do not fit next to the name and the amount, so the buttons
+  // Buttons do not fit next to the name and the amount, so they
   // move to their own line under them.
   .row {
     flex-wrap: wrap;
@@ -385,7 +443,7 @@
   }
 }
 
-// Category rows: a small hint of movement from the left.
+// Rows: a small hint of movement from the left.
 @keyframes row-in {
   from {
     opacity: 0;
@@ -449,6 +507,11 @@
     animation: notice-in 0.35s var(--ease-spring) backwards;
   }
 
+  // The "Added" chip pops in with a small spring when a recurring expense is saved.
+  .added {
+    animation: fade-in 0.3s var(--ease-spring) backwards;
+  }
+
   // Progress bar: fills in from the left after the summary card appears,
   // and later changes to its width (after saving a category) glide.
   .bar__fill {
@@ -456,7 +519,7 @@
     transition: width 0.5s var(--ease-out);
   }
 
-  // Category rows: each one slides in from the left a moment after the previous.
+  // Rows: each one slides in from the left a moment after the previous.
   // The delay is fixed per position, so rows after the 12th share the last delay
   // and the list never makes you wait.
   .rows > .row {
