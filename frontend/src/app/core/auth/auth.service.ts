@@ -19,7 +19,7 @@ export class AuthService {
 
   loginWithGoogle(idToken: string): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/google`, { idToken })
+      .post<AuthResponse>(`${environment.apiUrl}/api/auth/google`, { idToken })
       .pipe(
         tap((response) => {
           localStorage.setItem(TOKEN_KEY, response.token);

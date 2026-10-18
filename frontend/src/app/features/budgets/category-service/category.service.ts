@@ -3,12 +3,13 @@ import {HttpClient} from '@angular/common/http';
 import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
 import {Observable} from 'rxjs';
 import {Category} from '../dtos/category';
+import {environment} from '../../../shared/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CategoryService {
-  private baseUrl = `${DevelopmentUrl}/api/categories`
+  private baseUrl = `${environment.apiUrl}/api/categories`
   private readonly httpClient = inject(HttpClient)
 
   getCategories() : Observable<Category[]> {

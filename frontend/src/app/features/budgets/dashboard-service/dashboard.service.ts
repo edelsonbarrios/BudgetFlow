@@ -4,11 +4,12 @@ import { Observable } from 'rxjs';
 
 import { BudgetSummary } from '../dtos/budget-summary';
 import { DevelopmentUrl } from '../../../shared/models/developmentUrl';
+import {environment} from '../../../shared/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${DevelopmentUrl}/api/summary`;
+  private readonly baseUrl = `${environment.apiUrl}/api/summary`;
 
   getBudgetSummary(month: number, year: number): Observable<BudgetSummary> {
     return this.http.get<BudgetSummary>(`${this.baseUrl}/budget/${month}/${year}`);

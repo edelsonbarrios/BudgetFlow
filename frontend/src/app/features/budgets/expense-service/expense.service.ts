@@ -6,14 +6,14 @@ import { Expense } from '../dtos/expense';
 import {CreateExpenseRequest} from '../dtos/create-expense';
 import { DevelopmentUrl } from '../../../shared/models/developmentUrl';
 import {PageResponse} from '../../../shared/models/PageResponse';
+import {environment} from '../../../shared/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${DevelopmentUrl}/api/expenses`;
+  private readonly baseUrl = `${environment.apiUrl}/api/expenses`;
 
   createExpense(request: CreateExpenseRequest): Observable<Expense> {
-    console.log(JSON.stringify(request));
     return this.http.post<Expense>(this.baseUrl, request);
   }
 

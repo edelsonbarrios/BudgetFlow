@@ -5,13 +5,14 @@ import {RecurringMonthItem} from '../dtos/recurring-month-item';
 import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
 import {CreateRecurringExpenseRequest} from '../dtos/create-recurring-expense-request';
 import {RecurringExpense} from '../dtos/recurring-expense';
+import {environment} from '../../../shared/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RecurringExpenseService {
   private httpClient = inject(HttpClient);
-  private baseUrl = `${DevelopmentUrl}/api/recurring-expenses`
+  private baseUrl = `${environment.apiUrl}/api/recurring-expenses`
 
   getMonthItems(budgetId :number) : Observable<RecurringMonthItem[]> {
     return this.httpClient.get<RecurringMonthItem[]>(`${this.baseUrl}?budgetId=${budgetId}`);

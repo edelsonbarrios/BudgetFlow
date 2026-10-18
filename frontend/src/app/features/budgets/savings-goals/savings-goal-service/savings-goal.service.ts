@@ -8,12 +8,13 @@ import {PageResponse} from '../../../../shared/models/PageResponse';
 import {CreateSavingsGoalRequest} from '../dtos/create-savings-goal-request';
 import {AddSavingsRequest} from '../dtos/add-savings-request';
 import {UpdateSavingsGoalRequest} from '../dtos/update-savings-goal-request';
+import {environment} from '../../../../shared/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SavingsGoalService {
-  private baseUrl = `${DevelopmentUrl}/api/savings-goal`
+  private baseUrl = `${environment.apiUrl}/api/savings-goal`
   private readonly http = inject(HttpClient);
 
   filterPaginatedSavingsGoals(

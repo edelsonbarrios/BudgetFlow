@@ -9,11 +9,12 @@ import {PageResponse} from '../../../shared/models/PageResponse';
 import {CreateBudgetRequest} from '../dtos/create-budget-request';
 import {UpdateBudgetRequest} from '../dtos/update-budget-request';
 import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
+import {environment} from '../../../shared/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${DevelopmentUrl}/api/budgets`
+  private readonly baseUrl = `${environment.apiUrl}/api/budgets`
 
   getBudgets(filter: BudgetFilter): Observable<PageResponse<Budget>> {
     return this.http.post<PageResponse<Budget>>(`${this.baseUrl}/filter-by-user`, filter);
