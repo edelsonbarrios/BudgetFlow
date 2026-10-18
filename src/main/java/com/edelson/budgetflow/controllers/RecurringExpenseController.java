@@ -2,6 +2,7 @@ package com.edelson.budgetflow.controllers;
 
 import com.edelson.budgetflow.dtos.requests.CreateRecurringExpenseRequest;
 import com.edelson.budgetflow.dtos.responses.RecurringExpenseResponse;
+import com.edelson.budgetflow.dtos.responses.RecurringMonthItemResponse;
 import com.edelson.budgetflow.services.RecurringExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,5 +33,13 @@ public class RecurringExpenseController {
             @Valid @RequestBody CreateRecurringExpenseRequest request
             ) {
         return ResponseEntity.ok(recurringExpenseService.createRecurringExpense(userId, request));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<RecurringMonthItemResponse>> getMonthlyItems(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam Long budgetId
+    ) {
+        return ResponseEntity.ok(recurringExpenseService.getMonthItems(userId, budgetId));
     }
 }

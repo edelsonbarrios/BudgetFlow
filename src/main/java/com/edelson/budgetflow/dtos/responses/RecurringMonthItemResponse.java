@@ -10,9 +10,7 @@ public record RecurringMonthItemResponse(
         String description,
         BigDecimal amount,
         String categoryName,
-        LocalDate dueDate,
-        RecurringStatus status,
-        Long expenseId,
-        LocalDate paidDate,
-        Long budgetCategoryId
+        LocalDate suggestedDate,
+        boolean paid,
+        LocalDate paidDate
 ) { }

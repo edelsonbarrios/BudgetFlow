@@ -10,16 +10,22 @@ import { DashboardService } from '../../budgets/dashboard-service/dashboard.serv
 import { BudgetAlert } from '../../budgets/dtos/budget-alert';
 import { BudgetSummary } from '../../budgets/dtos/budget-summary';
 import { CURRENCY_CODE, MONTH_NAMES } from '../../budgets/budget-helpers/budget-helpers';
+import {RecurringExpense} from '../../budgets/dtos/recurring-expense';
+import {RecurringExpenseDialogComponent} from '../../budgets/recurring-expense-dialog/recurring-expense-dialog.component';
 
 /**
  * How one month is going: what is left to spend, and how each category is doing.
  * Every number and every status (OK, WARNING, EXCEEDED) comes from the backend.
  * This page only shows them. It never works out a percent or a status itself.
+ *
+ * The page also has the "Add recurring expense" button. A recurring expense is a
+ * template (like rent) that is not tied to any month, so adding one never changes
+ * the numbers on this page and the summary does not need to reload.
  */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, RecurringExpenseDialogComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
@@ -63,6 +69,8 @@ export class DashboardComponent implements OnInit {
   /** True when the backend answers 404: this month has no budget yet. */
   readonly notFound = signal(false);
   readonly loadError = signal<string | null>(null);
+  /** Shown after a recurring expense was saved. */
+  readonly successMessage = signal<string | null>(null);
 
   /**
    * False for the first load, so the category rows appear slowly one by one.
@@ -132,6 +140,21 @@ export class DashboardComponent implements OnInit {
           this.firstLoadDone = true;
         },
       });
+  }
+
+  // ===========================================================================
+  // Recurring expenses
+  // ===========================================================================
+
+  /**
+   * Runs when the dialog saved a recurring expense.
+   * Nothing on this page depends on it, so there is no reload. The user finds it
+   * under "Recurring this month" inside each budget.
+   */
+  onRecurringSaved(recurringExpense: RecurringExpense): void {
+    this.successMessage.set(
+      `${recurringExpense.description} saved, nice. You'll find it in each budget under "Recurring this month".`,
+    );
   }
 
   // ===========================================================================

@@ -30,40 +30,57 @@
         <p class="page__text">How this month is going, and where your money is.</p>
       </div>
 
-      <div class="month-nav" role="group" aria-label="Choose month">
-        <div class="stepper">
+      <div class="tools">
+        <div class="month-nav" role="group" aria-label="Choose month">
+          <div class="stepper">
+            <button
+              type="button"
+              class="stepper__btn"
+              aria-label="Previous month"
+              (click)="stepMonth(-1)"
+            >
+              <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M15 6l-6 6 6 6" />
+              </svg>
+            </button>
+            <p class="stepper__label" aria-live="polite">{{ monthLabel() }}</p>
+            <button
+              type="button"
+              class="stepper__btn"
+              aria-label="Next month"
+              (click)="stepMonth(1)"
+            >
+              <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
+          </div>
           <button
             type="button"
-            class="stepper__btn"
-            aria-label="Previous month"
-            (click)="stepMonth(-1)"
+            class="btn btn--ghost"
+            [disabled]="isCurrentMonth()"
+            (click)="goToCurrentMonth()"
           >
-            <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-          </button>
-          <p class="stepper__label" aria-live="polite">{{ monthLabel() }}</p>
-          <button
-            type="button"
-            class="stepper__btn"
-            aria-label="Next month"
-            (click)="stepMonth(1)"
-          >
-            <svg class="stepper__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M9 6l6 6-6 6" />
-            </svg>
+            This month
           </button>
         </div>
-        <button
-          type="button"
-          class="btn btn--ghost"
-          [disabled]="isCurrentMonth()"
-          (click)="goToCurrentMonth()"
-        >
-          This month
+
+        <!-- Always available: a recurring expense does not need a budget -->
+        <button type="button" class="btn btn--primary" (click)="recurringDialog.open()">
+          <svg class="btn__icon btn__icon--plus" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Add recurring expense
         </button>
       </div>
     </header>
+
+    <!-- Success message (announced politely to screen readers) -->
+    <div aria-live="polite">
+      @if (successMessage()) {
+        <p class="notice notice--success">{{ successMessage() }}</p>
+      }
+    </div>
 
     <!-- States: loading, no budget this month, error, or the dashboard -->
     @if (loading()) {
@@ -214,3 +231,9 @@
     }
   </div>
 </section>
+
+<!--
+  The popup lives outside the states above, so it always exists.
+  Saving a recurring expense only shows a message: nothing on this page depends on it.
+-->
+<app-recurring-expense-dialog #recurringDialog (saved)="onRecurringSaved($event)" />

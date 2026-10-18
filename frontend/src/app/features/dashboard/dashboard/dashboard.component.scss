@@ -13,7 +13,7 @@
 //    A forwards fill would freeze the final transform and block hover effects.
 //  - Anything that moves lives inside prefers-reduced-motion: no-preference.
 //
-// Page entrance order:  , big-number card, section title, then each category
+// Page entrance order: header, big-number card, section title, then each category
 // row slides in from the left a moment after the previous one. Row delays are fixed
 // per position (SCSS loop). The first load is slower, later loads use .rows--quick.
 //
@@ -76,6 +76,16 @@
     margin-top: var(--space-2);
     color: var(--color-text-muted);
   }
+}
+
+// The month buttons and the "Add recurring expense" button sit together on the right.
+// On narrow screens they wrap onto their own lines.
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3) var(--space-4);
 }
 
 // ---- Signed-in user: photo, name and email -------------------------------------------
@@ -300,6 +310,11 @@
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+
+  &--success {
+    background: var(--color-ok-bg);
+    color: var(--color-ok);
+  }
 
   &--error {
     background: var(--color-exceeded-bg);
@@ -583,6 +598,12 @@
 @media (max-width: 480px) {
   .page {
     padding-top: var(--space-5);
+  }
+
+  // The tools take the full width and line up on the left, under the title.
+  .tools {
+    justify-content: flex-start;
+    width: 100%;
   }
 
   .hero {
