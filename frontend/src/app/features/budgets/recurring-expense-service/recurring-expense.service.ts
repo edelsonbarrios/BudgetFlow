@@ -2,10 +2,9 @@ import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable, ObservedValuesFromArray} from 'rxjs';
 import {RecurringMonthItem} from '../dtos/recurring-month-item';
-import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
 import {CreateRecurringExpenseRequest} from '../dtos/create-recurring-expense-request';
 import {RecurringExpense} from '../dtos/recurring-expense';
-import {environment} from '../../../shared/environments/environment';
+import {environment} from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'

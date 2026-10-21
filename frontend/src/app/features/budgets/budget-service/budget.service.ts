@@ -7,7 +7,7 @@ import {BudgetFilter} from '../dtos/budget-filter';
 import {PageResponse} from '../../../shared/models/PageResponse';
 import {CreateBudgetRequest} from '../dtos/create-budget-request';
 import {UpdateBudgetRequest} from '../dtos/update-budget-request';
-import {environment} from '../../../shared/environments/environment';
+import {environment} from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetService {

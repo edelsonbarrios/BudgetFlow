@@ -1,12 +1,10 @@
 import {HttpClient, HttpParams} from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-
 import { Expense } from '../dtos/expense';
 import {CreateExpenseRequest} from '../dtos/create-expense';
-import { DevelopmentUrl } from '../../../shared/models/developmentUrl';
 import {PageResponse} from '../../../shared/models/PageResponse';
-import {environment} from '../../../shared/environments/environment';
+import {environment} from '../../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {

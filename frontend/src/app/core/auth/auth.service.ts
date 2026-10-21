@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import {environment, USER} from '../../shared/environments/environment';
+import {USER} from '../../shared/environments/environment';
+import {environment} from '../../../environments/environment';
 import {TOKEN_KEY, USER_EMAIL, USER_NAME} from '../../shared/environments/environment';
 
 export interface AuthResponse {

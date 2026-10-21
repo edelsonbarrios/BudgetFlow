@@ -8,7 +8,7 @@ import {PageResponse} from '../../../../shared/models/PageResponse';
 import {CreateSavingsGoalRequest} from '../dtos/create-savings-goal-request';
 import {AddSavingsRequest} from '../dtos/add-savings-request';
 import {UpdateSavingsGoalRequest} from '../dtos/update-savings-goal-request';
-import {environment} from '../../../../shared/environments/environment';
+import {environment} from '../../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'

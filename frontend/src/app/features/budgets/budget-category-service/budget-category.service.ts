@@ -6,7 +6,7 @@ import {DevelopmentUrl} from '../../../shared/models/developmentUrl';
 import { BudgetCategory } from '../dtos/budget-category';
 import { CreateBudgetCategoryRequest } from '../dtos/create-budget-category-request';
 import { UpdateBudgetCategoryRequest } from '../dtos/update-budget-category-request';
-import {environment} from '../../../shared/environments/environment';
+import {environment} from '../../../../environments/environment';
 
 
 /**
